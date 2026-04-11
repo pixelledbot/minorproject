@@ -6,7 +6,7 @@ __pycache__/
 .env
 uploads/
 dataset_combined/
-dataset.db
+database.db
 procfile
 requirements.txt
 waste_classifier.pth
