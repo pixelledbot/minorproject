@@ -1,0 +1,12 @@
+.venv/
+Dataset/
+data/
+__pycache__/
+*.pyc
+.env
+uploads/
+dataset_combined/
+dataset.db
+procfile
+requirements.txt
+waste_classifier.pth
