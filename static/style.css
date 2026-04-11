@@ -1,0 +1,173 @@
+
+/* ---------- GLOBAL ---------- */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg,#9c94c3,#ffffff);
+    color: rgb(0, 0, 0);
+    text-align: center;
+    margin:0;
+}
+
+/* ---------- CARD ---------- */
+.card {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    margin: 40px auto;
+    width: 350px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 20px rgba(92, 87, 87, 0.3);
+}
+
+/* Bigger dashboard */
+.big {
+    width: 90%;
+}
+
+/* ---------- BUTTONS ---------- */
+.btn {
+    padding: 10px 20px;
+    border:none;
+    background:#00c6ff;
+    color:white;
+    border-radius:10px;
+    cursor:pointer;
+    transition:0.3s;
+}
+.btn:hover {
+    transform: scale(1.1);
+}
+.secondary {
+    background:#ff758c;
+}
+
+/* ---------- IMAGE ---------- */
+.preview {
+    width:200px;
+    border-radius:10px;
+    display:none;
+}
+
+/* ---------- RESULT COLORS ---------- */
+.result.general {color: lightgreen;}
+.result.infectious {color: red;}
+.result.pharmaceutical {color: yellow;}
+.result.sharps {color: white;}
+
+/* ---------- BAR ---------- */
+.bar {
+    background:#a68888;
+    border-radius:10px;
+    overflow:hidden;
+    margin:10px 0;
+    padding:5px;
+}
+
+.fill {
+    background:#00ffcc;
+    height:15px;
+    border-radius:10px;
+    animation: grow 1s;
+}
+
+.small .fill {
+    height:10px;
+}
+
+@keyframes grow {
+    from {width:0;}
+}
+
+/* ---------- RISK ---------- */
+.risk {
+    padding:10px;
+    border-radius:10px;
+    margin:10px 0;
+}
+.risk.High {background:red;}
+.risk.Medium {background:orange;}
+.risk.Low {background:green;}
+
+/* ---------- HISTORY GRID ---------- */
+.history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+/* history card */
+.history-item {
+    background: rgba(244, 224, 224, 0.1);
+    padding: 10px;
+    border-radius: 15px;
+    transition: 0.3s;
+}
+.history-item:hover {
+    transform: scale(1.05);
+}
+
+/* image */
+.history-item img {
+    width: 100%;
+    border-radius: 10px;
+}
+
+/* text */
+.info {
+    margin-top: 8px;
+}
+
+.cat {
+    font-weight: bold;
+}
+
+.conf {
+    font-size: 14px;
+}
+
+.time {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* category border colors */
+.general { border: 4px solid lightgreen; }
+.infectious { border: 4px solid red; }
+.pharmaceutical { border: 4px solid yellow; }
+.sharps { border: 4px solid white; }
+
+/* ---------- ANIMATION ---------- */
+.fade {
+    animation: fadeIn 1s;
+}
+
+@keyframes fadeIn {
+    from {opacity:0;}
+    to {opacity:1;}
+}
+
+
+/* center wrapper */
+.chart-box {
+    width: 500px;
+    height: 500px;
+    margin: 30px auto;   /* horizontal center */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* force canvas size */
+.chart-box canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+body {
+    background: url("/static/bg.png") no-repeat center center fixed;
+    background-size: cover;
+}
+body {
+    color: rgb(0, 0, 0);
+}
