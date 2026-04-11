@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="fade">
+
+<div class="card">
+    <h2>📷 Upload Waste Image</h2>
+
+    <form action="/predict" method="POST" enctype="multipart/form-data">
+        
+        <input type="file" name="image" accept="image/*" required onchange="preview(event)">
+        
+        <br><br>
+        <img id="preview" class="preview">
+
+        <br><br>
+
+        <button class="btn">Predict</button>
+    </form>
+</div>
+
+<script>
+function preview(e){
+    let img=document.getElementById("preview");
+    img.src=URL.createObjectURL(e.target.files[0]);
+    img.style.display="block";
+}
+</script>
+
+</body>
+</html>

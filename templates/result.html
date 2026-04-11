@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="fade">
+
+<div class="card">
+
+<h2> Prediction Result</h2>
+
+<img src="/uploads/{{ filename }}" class="preview" style="display:block;">
+
+<h3 class="result {{ prediction }}">
+    {{ prediction | capitalize }}
+</h3>
+
+<!-- Confidence -->
+<div class="bar">
+    <div class="fill" id="main-bar"></div>
+</div>
+<p id="confidence-text">{{ confidence }}%</p>
+
+<!-- Risk -->
+<div class="risk {{ risk }}">
+    Risk: {{ risk }}
+</div>
+
+<h4>♻️ Disposal Instructions</h4>
+<p>{{ instruction }}</p>
+
+<!-- SAFE JSON -->
+<script id="prob-data" type="application/json">
+{{ all_probs | tojson }}
+</script>
+
+<script id="main-conf" type="application/json">
+{{ confidence }}
+</script>
+
+<h4>Confidence Breakdown</h4>
+<div id="prob-container"></div>
+
+<br>
+
+<a href="/upload"><button class="btn">Try Again</button></a>
+<a href="/dashboard"><button class="btn secondary">Dashboard</button></a>
+
+</div>
+
+<script>
+// main confidence
+const conf = JSON.parse(
+    document.getElementById("main-conf").textContent
+);
+document.getElementById("main-bar").style.width = conf + "%";
+
+// probabilities
+const probs = JSON.parse(
+    document.getElementById("prob-data").textContent
+);
+
+const container = document.getElementById("prob-container");
+
+for (let key in probs) {
+    let bar = document.createElement("div");
+    bar.className = "bar small";
+
+    let fill = document.createElement("div");
+    fill.className = "fill";
+    fill.style.width = probs[key] + "%";
+
+    let label = document.createElement("span");
+    label.innerText = key + " (" + probs[key] + "%)";
+
+    bar.appendChild(label);
+    bar.appendChild(fill);
+    container.appendChild(bar);
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="fade">
+
+<div class="card big">
+
+<h1>📊 Dashboard</h1>
+
+<h3>Total Scans: {{ total }}</h3>
+
+<!-- Chart (ONLY FIXED PART) -->
+<div class="chart-box">
+    <canvas id="chart" width="240" height="240"></canvas>
+</div>
+
+<!-- HISTORY -->
+<h3>🕒 Scan History</h3>
+
+<div class="history-grid">
+{% for log in logs %}
+<div class="history-item {{ log[2] }}">
+
+    <img src="/uploads/{{ log[1] }}">
+
+    <div class="info">
+        <p class="cat">{{ log[2] }}</p>
+        <p class="conf">{{ log[3] }}%</p>
+        <p class="time">{{ log[4] }}</p>
+    </div>
+
+</div>
+{% endfor %}
+</div>
+
+<a href="/"><button class="btn">Home</button></a>
+
+</div>
+
+<!-- SAFE DATA -->
+<script id="chart-data" type="application/json">
+{{ data | tojson }}
+</script>
+
+<script>
+const rawData = JSON.parse(
+    document.getElementById("chart-data").textContent
+);
+
+const labels = rawData.map(x => x[0]);
+const values = rawData.map(x => x[1]);
+
+new Chart(document.getElementById("chart"), {
+    type: "doughnut",
+    data: {
+        labels: labels,
+        datasets: [{
+            data: values
+        }]
+    },
+    options: {
+        responsive: false   // only needed fix
+    }
+});
+</script>
+
+</body>
+</html>
