@@ -10,3 +10,5 @@ database.db
 procfile
 requirements.txt
 waste_classifier_best.pth
+classes.pth
+history.pdf
