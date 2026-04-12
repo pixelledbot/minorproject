@@ -1,67 +1,63 @@
 import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
+from torchvision.models import resnet18, ResNet18_Weights
 from torch.utils.data import DataLoader
 
-# EXACT SAME MODEL USED IN TRAINING
-class WasteClassifier(nn.Module):
-    def __init__(self):
-        super(WasteClassifier, self).__init__()
+# ---------------- DEVICE ----------------
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
 
-        self.conv_layers = nn.Sequential(
-            nn.Conv2d(3,32,3,padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
+IMG_SIZE = 224  # MUST MATCH TRAINING
 
-            nn.Conv2d(32,64,3,padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-
-            nn.Conv2d(64,128,3,padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
-        )
-
-        self.fc_layers = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(128*28*28,128),
-            nn.ReLU(),
-            nn.Linear(128,4)
-        )
-
-    def forward(self,x):
-        x = self.conv_layers(x)
-        x = self.fc_layers(x)
-        return x
-
-
+# ---------------- TRANSFORM (MUST MATCH TRAINING) ----------------
 transform = transforms.Compose([
-    transforms.Resize((224,224)),
-    transforms.ToTensor()
+    transforms.Resize((IMG_SIZE, IMG_SIZE)),
+    transforms.ToTensor(),
+    transforms.Normalize(
+        [0.485, 0.456, 0.406],
+        [0.229, 0.224, 0.225]
+    )
 ])
 
+# ---------------- DATASET ----------------
 test_dataset = datasets.ImageFolder(
-    root="data/test",
+    root="dataset_split/test",
     transform=transform
 )
 
-test_loader = DataLoader(test_dataset,batch_size=32,shuffle=False)
+test_loader = DataLoader(
+    test_dataset,
+    batch_size=32,
+    shuffle=False,
+    num_workers=0
+)
 
-model = WasteClassifier()
-model.load_state_dict(torch.load("waste_classifier.pth"))
+# ---------------- MODEL ----------------
+model = resnet18(weights=None)  # IMPORTANT: no re-download
+model.fc = nn.Linear(model.fc.in_features, 4)
+
+# Load trained weights
+model.load_state_dict(torch.load("waste_classifier_best.pth", map_location=device))
+
+model = model.to(device)
 model.eval()
 
+# ---------------- TESTING ----------------
 correct = 0
 total = 0
 
 with torch.no_grad():
     for images, labels in test_loader:
+        images, labels = images.to(device), labels.to(device)
+
         outputs = model(images)
-        _, predicted = torch.max(outputs,1)
+        _, predicted = torch.max(outputs, 1)
 
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
 accuracy = 100 * correct / total
 
-print("Test Accuracy:", accuracy,"%")
+print("\n🎯 Test Accuracy:", round(accuracy, 2), "%")
+print("✅ Classes:", test_dataset.classes)

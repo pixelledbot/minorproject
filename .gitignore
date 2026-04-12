@@ -9,4 +9,4 @@ dataset_raw/
 database.db
 procfile
 requirements.txt
-waste_classifier_final.pth
+waste_classifier_best.pth
