@@ -31,7 +31,7 @@ init_db()
 model = models.resnet18(pretrained=False)
 model.fc = nn.Linear(model.fc.in_features, 4)
 
-model.load_state_dict(torch.load("waste_classifier_final.pth", map_location="cpu"))
+model.load_state_dict(torch.load("waste_classifier_best.pth", map_location="cpu"))
 model.eval()
 
 classes = ["general","infectious","pharmaceutical","sharps"]
