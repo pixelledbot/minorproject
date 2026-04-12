@@ -1,12 +1,12 @@
 .venv/
-Dataset/
-data/
 __pycache__/
 *.pyc
 .env
 uploads/
-dataset_combined/
+dataset_split/
+dataset_clean/
+dataset_raw/
 database.db
 procfile
 requirements.txt
-waste_classifier.pth
+waste_classifier_final.pth
