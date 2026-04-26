@@ -67,7 +67,7 @@ canvas {
     height: 100% !important;
 }
 
-/* 🔥 IMAGE PREVIEW MODAL */
+/* IMAGE MODAL */
 .modal {
     display: none;
     position: fixed;
@@ -110,6 +110,11 @@ canvas {
     <canvas id="chart"></canvas>
 </div>
 
+<!-- 🔥 HOME BUTTON MOVED HERE -->
+<div style="text-align:center; margin-top:10px;">
+    <a href="/"><button class="btn">Home</button></a>
+</div>
+
 <!-- HISTORY -->
 <h3>🕒 Scan History</h3>
 
@@ -125,7 +130,6 @@ canvas {
 
 {% for log in logs %}
 <tr>
-    <!-- CLICKABLE IMAGE -->
     <td>
         <img src="/static/uploads/{{ log[1] }}" onclick="openModal(this.src)">
     </td>
@@ -149,11 +153,9 @@ canvas {
 </table>
 </div>
 
-<a href="/"><button class="btn">Home</button></a>
-
 </div>
 
-<!-- 🔥 MODAL -->
+<!-- MODAL -->
 <div id="imgModal" class="modal">
     <span class="close" onclick="closeModal()">&times;</span>
     <img class="modal-content" id="modalImg">
@@ -163,10 +165,6 @@ canvas {
 <script id="chart-data" type="application/json">
 {{ data | tojson }}
 </script>
-
-<a href="/download_pdf">
-    <button>Download as PDF</button>
-</a>
 
 <script>
 // CHART
@@ -209,7 +207,7 @@ new Chart(document.getElementById("chart"), {
     }
 });
 
-// 🔥 MODAL SCRIPT
+// MODAL
 function openModal(src) {
     document.getElementById("imgModal").style.display = "block";
     document.getElementById("modalImg").src = src;

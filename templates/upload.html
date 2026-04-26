@@ -2,31 +2,103 @@
 <html>
 <head>
 <link rel="stylesheet" href="/static/style.css">
+
+<style>
+.upload-box {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.hidden-input {
+    display: none;
+}
+
+.action-btn {
+    margin: 10px;
+}
+</style>
+
 </head>
+
 <body class="fade">
 
 <div class="card">
-    <h2>📷 Upload Waste Image</h2>
 
-    <form action="/predict" method="POST" enctype="multipart/form-data">
-        
-        <input type="file" name="image" accept="image/*" required onchange="preview(event)">
-        
+<h2>📷 Upload Waste Image</h2>
+
+<form action="/predict" method="POST" enctype="multipart/form-data" id="uploadForm">
+
+    <!-- HIDDEN INPUT (shared) -->
+    <input type="file" name="image" id="fileInput" class="hidden-input" accept="image/*" required>
+
+    <div class="upload-box">
+
+        <!-- CAMERA BUTTON -->
+        <button type="button" class="btn action-btn" onclick="openCamera()">
+            📷 Use Camera
+        </button>
+
+        <!-- GALLERY BUTTON -->
+        <button type="button" class="btn secondary action-btn" onclick="openGallery()">
+            📁 Upload from Device
+        </button>
+
         <br><br>
-        <img id="preview" class="preview">
 
-        <br><br>
+        <!-- FILE NAME -->
+        <p id="fileName">No file selected</p>
 
-        <button class="btn">Predict</button>
-    </form>
+        <br>
+
+        <!-- SUBMIT -->
+        <button type="submit" class="btn">Predict</button>
+
+    </div>
+
+</form>
+
+<br>
+<a href="/"><button class="btn secondary">Home</button></a>
+
 </div>
 
 <script>
-function preview(e){
-    let img=document.getElementById("preview");
-    img.src=URL.createObjectURL(e.target.files[0]);
-    img.style.display="block";
+const fileInput = document.getElementById("fileInput");
+const fileName = document.getElementById("fileName");
+
+// 📷 OPEN CAMERA
+function openCamera() {
+    fileInput.setAttribute("capture", "environment"); // force camera
+    fileInput.click();
 }
+
+// 📁 OPEN GALLERY
+function openGallery() {
+    fileInput.removeAttribute("capture"); // normal file picker
+    fileInput.click();
+}
+
+// SHOW FILE NAME
+fileInput.addEventListener("change", function() {
+    if (this.files.length > 0) {
+        fileName.innerText = this.files[0].name;
+    } else {
+        fileName.innerText = "No file selected";
+    }
+});
+
+// 🔥 CRITICAL FIX: RESET INPUT AFTER SUBMIT
+document.getElementById("uploadForm").addEventListener("submit", function() {
+    setTimeout(() => {
+        fileInput.value = "";
+        fileName.innerText = "No file selected";
+    }, 100);
+});
+
+// 🔥 ALSO RESET ON EVERY CLICK (ensures camera always opens)
+fileInput.addEventListener("click", function () {
+    this.value = null;
+});
 </script>
 
 </body>
