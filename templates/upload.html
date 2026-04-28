@@ -4,56 +4,58 @@
 <link rel="stylesheet" href="/static/style.css">
 
 <style>
-.upload-box {
+.camera-container {
+    display: none;
     text-align: center;
-    margin-top: 20px;
 }
 
-.hidden-input {
+video {
+    width: 300px;
+    border-radius: 12px;
+}
+
+canvas {
     display: none;
 }
 
-.action-btn {
-    margin: 10px;
+.preview-img {
+    width: 200px;
+    margin-top: 10px;
+    border-radius: 10px;
 }
 </style>
-
 </head>
 
 <body class="fade">
 
 <div class="card">
 
-<h2>📷 Upload Waste Image</h2>
+<h2>📷 Smart Waste Scanner</h2>
 
 <form action="/predict" method="POST" enctype="multipart/form-data" id="uploadForm">
 
-    <!-- HIDDEN INPUT (shared) -->
-    <input type="file" name="image" id="fileInput" class="hidden-input" accept="image/*" required>
+<input type="file" name="image" id="fileInput" hidden>
 
-    <div class="upload-box">
+<!-- BUTTONS -->
+<button type="button" class="btn" onclick="startCamera()">📷 Open Camera</button>
+<button type="button" class="btn secondary" onclick="openGallery()">📁 Upload</button>
 
-        <!-- CAMERA BUTTON -->
-        <button type="button" class="btn action-btn" onclick="openCamera()">
-            📷 Use Camera
-        </button>
+<br><br>
 
-        <!-- GALLERY BUTTON -->
-        <button type="button" class="btn secondary action-btn" onclick="openGallery()">
-            📁 Upload from Device
-        </button>
+<!-- CAMERA -->
+<div class="camera-container" id="cameraBox">
+    <video id="video" autoplay></video><br>
 
-        <br><br>
+    <button type="button" class="btn" onclick="captureImage()">📸 Capture</button>
+    <button type="button" class="btn secondary" onclick="stopCamera()">❌ Close</button>
+</div>
 
-        <!-- FILE NAME -->
-        <p id="fileName">No file selected</p>
+<!-- PREVIEW -->
+<img id="preview" class="preview-img">
 
-        <br>
+<br><br>
 
-        <!-- SUBMIT -->
-        <button type="submit" class="btn">Predict</button>
-
-    </div>
+<button type="submit" class="btn">Predict</button>
 
 </form>
 
@@ -63,41 +65,62 @@
 </div>
 
 <script>
-const fileInput = document.getElementById("fileInput");
-const fileName = document.getElementById("fileName");
+let video = document.getElementById("video");
+let cameraBox = document.getElementById("cameraBox");
+let preview = document.getElementById("preview");
+let fileInput = document.getElementById("fileInput");
 
-// 📷 OPEN CAMERA
-function openCamera() {
-    fileInput.setAttribute("capture", "environment"); // force camera
-    fileInput.click();
+let stream;
+
+// 🎥 START CAMERA
+async function startCamera() {
+    cameraBox.style.display = "block";
+
+    stream = await navigator.mediaDevices.getUserMedia({
+        video: true
+    });
+
+    video.srcObject = stream;
 }
 
-// 📁 OPEN GALLERY
-function openGallery() {
-    fileInput.removeAttribute("capture"); // normal file picker
-    fileInput.click();
-}
-
-// SHOW FILE NAME
-fileInput.addEventListener("change", function() {
-    if (this.files.length > 0) {
-        fileName.innerText = this.files[0].name;
-    } else {
-        fileName.innerText = "No file selected";
+// ❌ STOP CAMERA
+function stopCamera() {
+    cameraBox.style.display = "none";
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
     }
-});
+}
 
-// 🔥 CRITICAL FIX: RESET INPUT AFTER SUBMIT
-document.getElementById("uploadForm").addEventListener("submit", function() {
-    setTimeout(() => {
-        fileInput.value = "";
-        fileName.innerText = "No file selected";
-    }, 100);
-});
+// 📸 CAPTURE IMAGE
+function captureImage() {
+    let canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-// 🔥 ALSO RESET ON EVERY CLICK (ensures camera always opens)
-fileInput.addEventListener("click", function () {
-    this.value = null;
+    let ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob(function(blob) {
+        let file = new File([blob], "capture.jpg", { type: "image/jpeg" });
+
+        let dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+
+        preview.src = URL.createObjectURL(file);
+    });
+}
+
+// 📁 GALLERY
+function openGallery() {
+    fileInput.click();
+}
+
+// SHOW PREVIEW
+fileInput.addEventListener("change", function() {
+    if (this.files[0]) {
+        preview.src = URL.createObjectURL(this.files[0]);
+    }
 });
 </script>
 
