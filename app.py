@@ -126,7 +126,7 @@ def generate_heatmap(model, image_tensor, class_idx):
 @app.route("/")
 def home():
     stats = get_stats()
-    return render_template("home.html", stats=stats)
+    return render_template("index.html", stats=stats)
 
 @app.route("/upload")
 def upload():
