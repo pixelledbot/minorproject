@@ -13,4 +13,4 @@ waste_classifier_best.pth
 classes.pth
 logo.png
 report.pdf
-heatmaps
+heatmaps/
