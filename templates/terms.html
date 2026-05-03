@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Terms of Use — SafeWaste AI</title>
+<link rel="stylesheet" href="/static/style.css">
+
+<style>
+
+/* ================= NAV ================= */
+.navbar{
+  display:flex;
+  align-items:center;
+  padding:15px 25px;
+}
+
+/* ================= TABS ================= */
+.tab-buttons {
+  display:flex;
+  gap:10px;
+  margin:25px 0;
+  flex-wrap:wrap;
+}
+
+.tab-btn {
+  padding:10px 18px;
+  border-radius:25px;
+  border:none;
+  cursor:pointer;
+  background:#e8f5e9;
+  font-weight:600;
+  transition:0.3s;
+}
+
+.tab-btn.active {
+  background:var(--primary);
+  color:white;
+}
+
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* ================= BOOK STYLE ================= */
+.book {
+  background:#f9fff9;
+  border-left:5px solid #2e7d32;
+  padding:25px;
+  border-radius:12px;
+  line-height:1.7;
+}
+
+.book h2 {
+  color:#1b5e20;
+}
+
+.section-title {
+  margin-top:20px;
+  font-weight:700;
+  color:#2e7d32;
+}
+
+/* ================= CARDS ================= */
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:15px;
+  margin-top:20px;
+}
+
+.card{
+  background:#f1f8e9;
+  padding:18px;
+  border-radius:12px;
+  cursor:pointer;
+  transition:0.3s;
+  border:1px solid #ddd;
+}
+
+.card:hover{
+  transform:scale(1.05);
+  background:#e8f5e9;
+}
+
+.detail-box{
+  margin-top:25px;
+  padding:20px;
+  background:#ffffff;
+  border-left:5px solid #4caf50;
+  border-radius:10px;
+  line-height:1.7;
+}
+
+</style>
+</head>
+
+<body class="fade">
+
+<!-- ================= NAV ================= -->
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <div class="logo-icon">
+      <img src="/static/logo.png" alt="SafeWaste AI Logo">
+    </div>
+    SafeWaste AI
+  </a>
+</nav>
+
+<!-- ================= HEADER ================= -->
+<section class="hero-section">
+  <div class="hero-left">
+    <h1 class="hero-title">Terms of <span class="highlight">Use</span></h1>
+    <p class="hero-subtitle">
+      Rules and responsibilities for using SafeWaste AI system.
+    </p>
+  </div>
+</section>
+
+<!-- ================= CONTENT ================= -->
+<section class="features-section">
+
+<div class="tab-buttons">
+  <button class="tab-btn active" onclick="openTab('terms',this)">Terms</button>
+  <button class="tab-btn" onclick="openTab('rules',this)">Rules</button>
+</div>
+
+<!-- ================= TERMS ================= -->
+<div id="terms" class="tab-content active">
+
+<div class="book">
+
+<h2>Terms of Use</h2>
+
+<p>
+By using SafeWaste AI, you agree to follow the rules and guidelines below.
+This system is designed for hospital waste classification and educational purposes.
+</p>
+
+<div class="section-title">System Purpose</div>
+<p>
+SafeWaste AI is an AI-based tool used to classify biomedical waste into categories like infectious, sharps, pharmaceutical, and general waste.
+It is intended to assist healthcare staff, not replace human judgment.
+</p>
+
+<div class="section-title">Important Disclaimer</div>
+<p>
+This system does NOT provide medical diagnosis or treatment advice.
+AI predictions are based on trained datasets and may not always be 100% accurate.
+Final decisions must always be made by trained healthcare professionals.
+</p>
+
+</div>
+
+</div>
+
+<!-- ================= RULES ================= -->
+<div id="rules" class="tab-content">
+
+<div class="card-grid">
+
+<div class="card" onclick="show('use')">
+<h3>Acceptable Use</h3>
+<p>How system should be used</p>
+</div>
+
+<div class="card" onclick="show('limit')">
+<h3>Limitations</h3>
+<p>System constraints</p>
+</div>
+
+<div class="card" onclick="show('responsibility')">
+<h3>User Responsibility</h3>
+<p>Duties of users</p>
+</div>
+
+<div class="card" onclick="show('compliance')">
+<h3>Compliance</h3>
+<p>Legal and safety rules</p>
+</div>
+
+</div>
+
+<div id="info" class="detail-box">
+Click any section to view details.
+</div>
+
+</div>
+
+</section>
+
+<script>
+
+/* TAB */
+function openTab(id,btn){
+  document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* DETAILS */
+function show(type){
+
+let data = {
+
+use: `
+<h3>Acceptable Use Policy</h3>
+
+SafeWaste AI must only be used for:
+<br><br>
+• Hospital waste classification<br>
+• Educational purposes<br>
+• Research and training
+
+<br><br>
+Any misuse for non-medical or illegal activities is strictly prohibited.
+`,
+
+limit: `
+<h3>System Limitations</h3>
+
+The system has certain limitations:
+<br><br>
+• Accuracy depends on dataset quality<br>
+• Cannot detect unseen waste types reliably<br>
+• Requires proper image input<br>
+• Not a certified medical device
+
+<br><br>
+Users should always verify results manually.
+`,
+
+responsibility: `
+<h3>User Responsibility</h3>
+
+Users must ensure:
+<br><br>
+• Proper waste handling after prediction<br>
+• Correct usage of AI results<br>
+• Following hospital safety protocols<br>
+• No misuse of system output
+
+<br><br>
+Human supervision is mandatory at all times.
+`,
+
+compliance: `
+<h3>Legal Compliance</h3>
+
+The system aligns with:
+<br><br>
+• WHO Biomedical Waste Guidelines<br>
+• Indian Biomedical Waste Management Rules 2016<br>
+• Hospital safety regulations
+
+<br><br>
+Users must comply with local healthcare laws.
+`
+
+};
+
+document.getElementById("info").innerHTML = data[type];
+}
+
+</script>
+
+</body>
+</html>

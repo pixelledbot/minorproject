@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WHO Guidelines — SafeWaste AI</title>
+<link rel="stylesheet" href="/static/style.css">
+
+<style>
+
+/* ================= NAV TAB BUTTONS ================= */
+.tab-buttons {
+  display:flex;
+  gap:12px;
+  margin:30px 0;
+  flex-wrap:wrap;
+}
+
+.tab-btn {
+  padding:10px 18px;
+  border-radius:25px;
+  border:none;
+  cursor:pointer;
+  font-weight:600;
+  background:#e8f5e9;
+  transition:0.3s;
+}
+
+.tab-btn.active {
+  background:var(--primary);
+  color:white;
+  transform:scale(1.05);
+}
+
+/* ================= CONTENT ================= */
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* ================= BOOK STYLE LEARNING ================= */
+.book-section {
+  background:#f9fff9;
+  border-left:5px solid #4caf50;
+  padding:25px;
+  border-radius:12px;
+  line-height:1.8;
+  font-size:15px;
+}
+
+.book-title {
+  font-size:22px;
+  font-weight:700;
+  margin-bottom:10px;
+  color:#2e7d32;
+}
+
+.book-sub {
+  font-weight:600;
+  margin-top:15px;
+  color:#1b5e20;
+}
+
+/* ================= QUIZ ================= */
+.quiz-box {
+  background:#f1f8e9;
+  padding:20px;
+  border-radius:12px;
+}
+
+.option {
+  padding:12px;
+  margin:8px 0;
+  background:#fff;
+  border-radius:8px;
+  cursor:pointer;
+  border:1px solid #ddd;
+  transition:0.2s;
+}
+
+.option:hover { transform:scale(1.02); }
+
+.correct { background:#c8e6c9 !important; }
+.wrong { background:#ffcdd2 !important; }
+
+/* ================= MATCH GAME ================= */
+#itemsRow {
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:30px;
+}
+
+.item-card {
+  padding:10px 14px;
+  background:white;
+  border-radius:8px;
+  border:1px solid #ccc;
+  cursor:grab;
+}
+
+#binsRow {
+  display:flex;
+  gap:20px;
+  flex-wrap:wrap;
+}
+
+.dustbin {
+  width:150px;
+  padding:15px;
+  text-align:center;
+  border-radius:12px;
+  background:#f1f8e9;
+  border:2px dashed #ccc;
+  transition:0.3s;
+}
+
+.dustbin img { width:80px; }
+
+.dustbin.dragover { background:#c8e6c9; }
+.correct-drop { border:2px solid green !important; }
+.wrong-drop { border:2px solid red !important; }
+
+</style>
+</head>
+
+<body>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <div class="logo-icon">
+      <img src="/static/logo.png" alt="SafeWaste AI Logo">
+    </div> SafeWaste AI
+  </a>
+</nav>
+
+<section class="features-section">
+
+<!-- ================= TAB BUTTONS ================= -->
+<div class="tab-buttons">
+  <button class="tab-btn active" onclick="openTab('learn',this)">Learn</button>
+  <button class="tab-btn" onclick="openTab('quiz',this)">Quiz</button>
+  <button class="tab-btn" onclick="openTab('match',this)">Match Game</button>
+</div>
+
+<!-- ================= LEARN ================= -->
+<div id="learn" class="tab-content active">
+
+<div id="binInfo" class="book-section">
+<div class="book-title">WHO Biomedical Waste Classification</div>
+Select a category below to study in detail.
+</div>
+
+<div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+<button class="tab-btn" onclick="showBin('infectious')">Infectious Waste</button>
+<button class="tab-btn" onclick="showBin('sharps')">Sharps Waste</button>
+<button class="tab-btn" onclick="showBin('pharma')">Pharmaceutical Waste</button>
+<button class="tab-btn" onclick="showBin('general')">General Waste</button>
+</div>
+
+</div>
+
+<!-- ================= QUIZ ================= -->
+<div id="quiz" class="tab-content">
+<div class="quiz-box">
+<h3 id="q"></h3>
+<div id="opts"></div>
+<p id="score"></p>
+<p id="res"></p>
+<button id="nextBtn" onclick="nextQ()" class="btn btn-outline">Next</button>
+</div>
+</div>
+
+<!-- ================= MATCH ================= -->
+<div id="match" class="tab-content">
+
+<h3>Drag items into correct bins</h3>
+
+<div id="itemsRow"></div>
+
+<div id="binsRow">
+  <div class="dustbin" data-type="infectious"><img src="/static/yellow.png"><p>Infectious</p></div>
+  <div class="dustbin" data-type="sharps"><img src="/static/white.png"><p>Sharps</p></div>
+  <div class="dustbin" data-type="pharma"><img src="/static/blue.png"><p>Pharma</p></div>
+  <div class="dustbin" data-type="general"><img src="/static/black.png"><p>General</p></div>
+</div>
+
+<p id="matchScore"></p>
+<button onclick="resetMatch()" class="btn btn-outline">Reset Game</button>
+
+</div>
+
+</section>
+
+<script>
+
+/* ================= TAB FIX ================= */
+function openTab(tab, btn){
+  document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+
+  document.getElementById(tab).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+/* ================= BOOK STYLE CONTENT ================= */
+function showBin(type){
+
+let data = {
+infectious: `
+<div class="book-title">Infectious Waste</div>
+<p><b>Definition:</b> Waste contaminated with blood, body fluids or infectious agents capable of spreading diseases.</p>
+
+<div class="book-sub">Examples</div>
+- Used bandages, cotton swabs<br>
+- Blood bags, IV tubes<br>
+- PPE kits, gloves, masks
+
+<div class="book-sub">Risks</div>
+- HIV, Hepatitis B & C transmission<br>
+- Bacterial infection spread
+
+<div class="book-sub">Disposal Method</div>
+- Incineration or autoclaving
+`,
+
+sharps: `
+<div class="book-title">Sharps Waste</div>
+<p><b>Definition:</b> Sharp objects that can cut or puncture skin and cause injury or infection.</p>
+
+<div class="book-sub">Examples</div>
+- Needles, syringes<br>
+- Surgical blades<br>
+- Broken glass
+
+<div class="book-sub">Risks</div>
+- Needle-stick injuries<br>
+- Direct blood infection
+
+<div class="book-sub">Disposal Method</div>
+- Puncture-proof containers + autoclave
+`,
+
+pharma: `
+<div class="book-title">Pharmaceutical Waste</div>
+<p><b>Definition:</b> Expired or unused medicines and chemical drugs.</p>
+
+<div class="book-sub">Examples</div>
+- Expired tablets & syrups<br>
+- Antibiotics<br>
+- Vaccines
+
+<div class="book-sub">Risks</div>
+- Water pollution<br>
+- Antibiotic resistance
+
+<div class="book-sub">Disposal Method</div>
+- Chemical treatment / incineration
+`,
+
+general: `
+<div class="book-title">General Waste</div>
+<p><b>Definition:</b> Non-hazardous waste that does not contain infectious or toxic material.</p>
+
+<div class="book-sub">Examples</div>
+- Paper, food waste<br>
+- Packaging materials
+
+<div class="book-sub">Risks</div>
+- Low risk but becomes dangerous if mixed
+
+<div class="book-sub">Disposal Method</div>
+- Recycling / municipal disposal
+`
+};
+
+document.getElementById("binInfo").innerHTML = data[type];
+}
+
+/* ================= QUIZ (UNCHANGED LOGIC) ================= */
+const qs=[
+{q:"Used syringe?",o:["Black","White","Blue","Yellow"],c:1},
+{q:"Blood bandage?",o:["Black","Yellow","Blue","White"],c:1},
+{q:"Expired medicine?",o:["Black","White","Blue","Yellow"],c:2},
+{q:"Food waste?",o:["Black","Blue","Yellow","White"],c:0},
+{q:"Needle risk?",o:["Noise","Infection","Heat","None"],c:1},
+{q:"Sharps container?",o:["Plastic bag","Box","Puncture-proof","Glass"],c:2},
+{q:"Pharma waste risk?",o:["Fire","Resistance","Heat","Dust"],c:1},
+{q:"Infectious example?",o:["Paper","Bandage","Bottle","Metal"],c:1},
+{q:"General waste?",o:["Needle","Medicine","Food","Blood"],c:2},
+{q:"Wrong disposal causes?",o:["Safety","Pollution","Growth","Cooling"],c:1}
+];
+
+let qi=0, sc=0, answered=false;
+
+function loadQ(){
+let q=qs[qi];
+document.getElementById("q").innerText=q.q;
+answered=false;
+
+let html="";
+q.o.forEach((op,i)=>{
+html+=`<div class="option" onclick="ans(this,${i})">${op}</div>`;
+});
+
+document.getElementById("opts").innerHTML=html;
+}
+
+function ans(el,i){
+if(answered) return;
+answered=true;
+
+let correct=qs[qi].c;
+document.querySelectorAll(".option")[correct].classList.add("correct");
+
+if(i!==correct) el.classList.add("wrong");
+else sc++;
+
+document.getElementById("score").innerText="Score: "+sc+"/"+qs.length;
+}
+
+function nextQ(){
+qi++;
+if(qi>=qs.length){
+document.getElementById("q").innerText="Quiz Finished!";
+document.getElementById("opts").innerHTML="";
+document.getElementById("res").innerText="Final Score: "+sc+"/"+qs.length;
+document.getElementById("nextBtn").style.display="none";
+return;
+}
+loadQ();
+}
+loadQ();
+
+/* ================= MATCH ================= */
+const matchItems=[
+{id:"1", text:"Needle", type:"sharps"},
+{id:"2", text:"Bandage", type:"infectious"},
+{id:"3", text:"Tablet", type:"pharma"},
+{id:"4", text:"Paper", type:"general"}
+];
+
+let scoreMatch=0;
+
+function renderItems(){
+let c=document.getElementById("itemsRow");
+c.innerHTML="";
+matchItems.forEach(item=>{
+let d=document.createElement("div");
+d.className="item-card";
+d.innerText=item.text;
+d.draggable=true;
+d.ondragstart=e=>e.dataTransfer.setData("id",item.id);
+c.appendChild(d);
+});
+}
+
+document.querySelectorAll(".dustbin").forEach(bin=>{
+bin.ondragover=e=>{e.preventDefault();bin.classList.add("dragover");};
+bin.ondragleave=()=>bin.classList.remove("dragover");
+
+bin.ondrop=e=>{
+e.preventDefault();
+bin.classList.remove("dragover");
+
+let id=e.dataTransfer.getData("id");
+let item=matchItems.find(i=>i.id===id);
+
+let el=[...document.querySelectorAll(".item-card")]
+.find(x=>x.innerText===item.text);
+
+if(item.type===bin.dataset.type){
+scoreMatch++;
+bin.classList.add("correct-drop");
+el.remove();
+} else {
+bin.classList.add("wrong-drop");
+setTimeout(()=>bin.classList.remove("wrong-drop"),800);
+}
+
+document.getElementById("matchScore").innerText=
+"Score: "+scoreMatch+"/"+matchItems.length;
+};
+});
+
+function resetMatch(){
+scoreMatch=0;
+document.getElementById("matchScore").innerText="";
+document.querySelectorAll(".dustbin").forEach(b=>{
+b.classList.remove("correct-drop","wrong-drop");
+});
+renderItems();
+}
+
+renderItems();
+
+</script>
+
+</body>
+</html>

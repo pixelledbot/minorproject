@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Biomedical Rules — SafeWaste AI</title>
+<link rel="stylesheet" href="/static/style.css">
+
+<style>
+
+/* ================= NAV ================= */
+.navbar{
+  display:flex;
+  align-items:center;
+  padding:15px 25px;
+}
+
+/* ================= TABS ================= */
+.tab-buttons {
+  display:flex;
+  gap:10px;
+  margin:25px 0;
+  flex-wrap:wrap;
+}
+
+.tab-btn {
+  padding:10px 18px;
+  border-radius:25px;
+  border:none;
+  cursor:pointer;
+  background:#e8f5e9;
+  font-weight:600;
+  transition:0.3s;
+}
+
+.tab-btn.active {
+  background:var(--primary);
+  color:white;
+  transform:scale(1.05);
+}
+
+/* ================= CONTENT ================= */
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* ================= BOOK STYLE ================= */
+.book {
+  background:#f9fff9;
+  border-left:5px solid #2e7d32;
+  padding:25px;
+  border-radius:12px;
+  line-height:1.7;
+}
+
+.book h2 {
+  color:#1b5e20;
+}
+
+.section-title {
+  margin-top:20px;
+  font-weight:700;
+  color:#2e7d32;
+}
+
+/* ================= RULE CARDS ================= */
+.rule-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:15px;
+  margin-top:20px;
+}
+
+.rule-card{
+  background:#f1f8e9;
+  padding:18px;
+  border-radius:12px;
+  cursor:pointer;
+  transition:0.3s;
+  border:1px solid #ddd;
+}
+
+.rule-card:hover{
+  transform:scale(1.05);
+  background:#e8f5e9;
+}
+
+.rule-detail{
+  margin-top:25px;
+  padding:20px;
+  background:#ffffff;
+  border-left:5px solid #4caf50;
+  border-radius:10px;
+  line-height:1.7;
+}
+
+</style>
+</head>
+
+<body class="fade">
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <div class="logo-icon">
+      <img src="/static/logo.png" alt="SafeWaste AI Logo">
+    </div>
+    SafeWaste AI
+  </a>
+</nav>
+
+<!-- ================= HERO ================= -->
+<section class="hero-section">
+  <div class="hero-left">
+    <h1 class="hero-title">Biomedical <span class="highlight">Waste Rules</span></h1>
+    <p class="hero-subtitle">
+      Complete biomedical waste management guidelines based on WHO + Indian BMW Rules 2016.
+    </p>
+  </div>
+</section>
+
+<!-- ================= LEARNING SECTION ================= -->
+<section class="features-section">
+
+<div class="tab-buttons">
+  <button class="tab-btn active" onclick="openTab('learn',this)">Learn</button>
+  <button class="tab-btn" onclick="openTab('rules',this)">Rules</button>
+</div>
+
+<!-- ================= LEARN TAB ================= -->
+<div id="learn" class="tab-content active">
+
+<div class="book">
+
+<h2>Biomedical Waste Management Overview</h2>
+
+<p>
+Biomedical waste is any waste generated during diagnosis, treatment, or immunization of humans or animals.
+It is highly hazardous because it can contain infectious microorganisms, toxic chemicals, or sharp objects.
+</p>
+
+<div class="section-title">Main Categories</div>
+<ul>
+<li>Infectious Waste</li>
+<li>Sharps Waste</li>
+<li>Pharmaceutical Waste</li>
+<li>General Waste</li>
+</ul>
+
+<div class="section-title">Why Proper Management is Important</div>
+<p>
+Improper handling can spread diseases like HIV, Hepatitis B & C, and cause environmental contamination.
+Proper segregation reduces infection risk and ensures safe disposal.
+</p>
+
+</div>
+
+</div>
+
+<!-- ================= RULES TAB ================= -->
+<div id="rules" class="tab-content">
+
+<div class="rule-grid">
+
+<div class="rule-card" onclick="showRule('seg')">
+<h3>Segregation</h3>
+<p>Waste separation at source</p>
+</div>
+
+<div class="rule-card" onclick="showRule('color')">
+<h3>Color Coding</h3>
+<p>Standard bin system</p>
+</div>
+
+<div class="rule-card" onclick="showRule('treat')">
+<h3>Treatment</h3>
+<p>Safe disposal methods</p>
+</div>
+
+<div class="rule-card" onclick="showRule('track')">
+<h3>Tracking</h3>
+<p>Barcode monitoring system</p>
+</div>
+
+<div class="rule-card" onclick="showRule('train')">
+<h3>Training</h3>
+<p>Staff safety education</p>
+</div>
+
+</div>
+
+<div id="detail" class="rule-detail">
+Click any rule above to view detailed explanation.
+</div>
+
+</div>
+
+</section>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+
+/* TAB SWITCH */
+function openTab(tab,btn){
+  document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+
+  document.getElementById(tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* RULE CONTENT */
+function showRule(type){
+
+let data = {
+
+seg: `
+<h3>Segregation at Source (Most Important Principle)</h3>
+
+Biomedical waste segregation means separating waste immediately at the point where it is generated such as ICU, Operation Theatre, laboratories, and wards.
+
+<br><br>
+
+<b>Importance :</b><br>
+Segregation at source is the most critical step in biomedical waste management because it:
+<br>
+- Prevents mixing of infectious and non-infectious waste<br>
+- Reduces risk of hospital-acquired infections (HAIs)<br>
+- Lowers treatment and disposal cost<br>
+- Improves efficiency of AI-based classification systems like SafeWaste AI<br>
+
+<br>
+
+<b>Rule:</b><br>
+Biomedical waste must NEVER be mixed with general waste under any condition.
+
+<br><br>
+
+<b>Example Mapping (SafeWaste AI System):</b><br>
+- Black Bin (General Waste) → Paper, packaging, food waste<br>
+- Blue Bin (Pharmaceutical) → Expired medicines, syrups, tablets<br>
+- Yellow Bin (Infectious) → Blood-stained cotton, bandages, tissues<br>
+- White Bin (Sharps) → Needles, blades, scalpels (puncture-proof container)
+`,
+
+color: `
+<h3>Color Coding System (SafeWaste AI Standard)</h3>
+
+Color coding is used to ensure correct identification and disposal of biomedical waste.
+
+<br><br>
+
+<b>SafeWaste AI Color System:</b><br><br>
+
+<b>⚫ Black Bin (General Waste):</b><br>
+Non-hazardous waste like paper, food, packaging materials. Safe for normal disposal.
+
+<br><br>
+
+<b>🔵 Blue Bin (Pharmaceutical Waste):</b><br>
+Expired or unused medicines, tablets, syrups, and chemical bottles.
+
+<br><br>
+
+<b>🟡 Yellow Bin (Infectious Waste):</b><br>
+Contaminated materials such as blood-stained cotton, dressings, human tissues.
+
+<br><br>
+
+<b>⚪ White Bin (Sharps Waste):</b><br>
+Needles, syringes with needles, blades, and other sharp instruments.
+
+<br><br>
+
+<b>Importance:</b><br>
+This system ensures proper treatment methods like incineration, autoclaving, or recycling depending on waste type.
+`,
+
+treat: `
+<h3>Waste Treatment Methods</h3>
+
+Biomedical waste cannot be directly disposed of and must undergo treatment to eliminate infection risk.
+
+<br><br>
+
+<b>1. Incineration:</b><br>
+High-temperature burning used for infectious and anatomical waste. Completely destroys pathogens.
+
+<br><br>
+
+<b>2. Autoclaving:</b><br>
+Steam sterilization process used for disinfecting infected waste before disposal.
+
+<br><br>
+
+<b>3. Chemical Treatment:</b><br>
+Disinfection using chemicals like chlorine compounds to neutralize harmful microorganisms.
+
+<br><br>
+
+<b>4. Shredding:</b><br>
+Used mainly for plastic waste to prevent reuse and ensure safe recycling.
+
+<br><br>
+
+<b>Final Disposal:</b><br>
+Treated waste is sent to authorized landfills or recycling facilities according to biomedical waste rules.
+`,
+
+track: `
+<h3>Tracking and Monitoring System</h3>
+
+SafeWaste AI supports digital tracking of biomedical waste using QR codes or barcode systems.
+
+<br><br>
+
+<b>Process:</b><br>
+Each waste bag is assigned a unique ID and tracked from:
+Hospital → Collection → Transport → Treatment Facility
+
+<br><br>
+
+<b>Importance:</b><br>
+- Prevents illegal dumping<br>
+- Ensures transparency in waste movement<br>
+- Helps government compliance reporting<br>
+- Enables AI-based analytics for hospital safety improvement
+`,
+
+train: `
+<h3>Training and Safety Measures</h3>
+
+Proper training of healthcare staff is essential for safe biomedical waste handling.
+
+<br><br>
+
+<b>Training Includes:</b><br>
+- Use of Personal Protective Equipment (PPE)<br>
+- Correct waste segregation techniques<br>
+- Handling of sharp objects safely<br>
+- Emergency procedures for injuries<br>
+
+<br><br>
+
+<b>Importance:</b><br>
+Reduces occupational hazards, prevents infection spread, and ensures compliance with biomedical waste regulations.
+
+<br><br>
+
+SafeWaste AI supports training by providing real-time disposal guidance after each scan.
+`
+};
+
+document.getElementById("detail").innerHTML = data[type];
+}
+
+</script>
+
+</body>
+</html>

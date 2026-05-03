@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, send_file, redirect, jsonify
 import torch
 import torch.nn as nn
 from torchvision import transforms, models
@@ -7,7 +7,6 @@ import os, sqlite3, datetime, time
 import cv2
 import numpy as np
 
-# PDF
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image as RLImage
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -19,23 +18,53 @@ app = Flask(__name__)
 def init_db():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
+
     c.execute("""
     CREATE TABLE IF NOT EXISTS history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    filename TEXT,
-    prediction TEXT,
-    confidence REAL,
-    timestamp TEXT
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT,
+        prediction TEXT,
+        confidence REAL,
+        timestamp TEXT
     )
     """)
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT,
+        prediction TEXT,
+        corrected TEXT,
+        confidence REAL,
+        timestamp TEXT
+    )
+    """)
+
     conn.commit()
     conn.close()
 
 init_db()
 
-# ---------------- LOAD CLASSES ----------------
+# ---------------- STATS ----------------
+def get_stats():
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+
+    c.execute("SELECT COUNT(*) FROM history")
+    total_scans = c.fetchone()[0]
+
+    c.execute("SELECT AVG(confidence) FROM history")
+    avg_conf = c.fetchone()[0] or 0
+
+    conn.close()
+
+    return {
+        "total_scans": total_scans,
+        "accuracy": round(avg_conf, 2)
+    }
+
+# ---------------- CLASSES ----------------
 classes = torch.load("classes.pth")
-print("Loaded classes:", classes)
 
 # ---------------- MODEL ----------------
 model = models.resnet18(pretrained=False)
@@ -45,7 +74,7 @@ model.eval()
 
 # ---------------- TRANSFORM ----------------
 transform = transforms.Compose([
-    transforms.Resize((224,224)),
+    transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406],
                          [0.229, 0.224, 0.225])
@@ -64,8 +93,8 @@ def generate_heatmap(model, image_tensor, class_idx):
 
     target_layer = model.layer4[-1]
 
-    handle_f = target_layer.register_forward_hook(forward_hook)
-    handle_b = target_layer.register_full_backward_hook(backward_hook)
+    h1 = target_layer.register_forward_hook(forward_hook)
+    h2 = target_layer.register_full_backward_hook(backward_hook)
 
     output = model(image_tensor)
     model.zero_grad()
@@ -83,26 +112,27 @@ def generate_heatmap(model, image_tensor, class_idx):
         cam += w * acts[i]
 
     cam = np.maximum(cam, 0)
-
     if cam.max() != 0:
         cam = cam / cam.max()
 
     cam = cv2.resize(cam, (224, 224))
 
-    handle_f.remove()
-    handle_b.remove()
+    h1.remove()
+    h2.remove()
 
     return cam
 
 # ---------------- ROUTES ----------------
 @app.route("/")
 def home():
-    return render_template("home.html")
+    stats = get_stats()
+    return render_template("home.html", stats=stats)
 
 @app.route("/upload")
 def upload():
     return render_template("upload.html")
 
+# ---------------- PREDICT ----------------
 @app.route("/predict", methods=["POST"])
 def predict():
     file = request.files.get("image")
@@ -111,6 +141,7 @@ def predict():
         return "No file uploaded"
 
     os.makedirs("static/uploads", exist_ok=True)
+
     filename = str(int(time.time())) + "_" + file.filename
     filepath = os.path.join("static/uploads", filename)
     file.save(filepath)
@@ -125,11 +156,7 @@ def predict():
     prediction = classes[pred.item()]
     confidence = round(conf.item() * 100, 2)
 
-    all_probs = {
-        classes[i]: round(probs[0][i].item() * 100, 2)
-        for i in range(len(classes))
-    }
-
+    # risk
     if prediction in ["infectious", "sharps"]:
         risk = "High"
     elif prediction == "pharmaceutical":
@@ -146,38 +173,52 @@ def predict():
 
     instruction = instructions.get(prediction, "Dispose properly.")
 
-    # HEATMAP
-    heatmap = generate_heatmap(model, img_tensor, pred.item())
+    # ---------------- HEATMAP FIX ----------------
+    cam = generate_heatmap(model, img_tensor, pred.item())
+
+    cam = np.maximum(cam, 0)
+    if cam.max() != 0:
+        cam = cam / cam.max()
+
+    cam = cv2.GaussianBlur(cam, (51, 51), 0)
+    cam = np.power(cam, 1.5)
+
+    heat = np.uint8(255 * cam)
+    heatmap_color = cv2.applyColorMap(heat, cv2.COLORMAP_TURBO)
+
+    glow = cv2.GaussianBlur(heatmap_color, (35, 35), 0)
+    heatmap_color = cv2.addWeighted(heatmap_color, 0.7, glow, 0.3, 0)
 
     original = cv2.imread(filepath)
     original = cv2.resize(original, (224, 224))
 
-    heatmap_color = cv2.applyColorMap(np.uint8(255 * heatmap), cv2.COLORMAP_JET)
-    overlay = cv2.addWeighted(original, 0.6, heatmap_color, 0.4, 0)
+    overlay = cv2.addWeighted(original, 0.55, heatmap_color, 0.65, 0)
 
     heatmap_filename = "heatmap_" + filename
     heatmap_path = os.path.join("static/uploads", heatmap_filename)
     cv2.imwrite(heatmap_path, overlay)
 
-    # SAVE TO DB
+    # save DB
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute(
-        "INSERT INTO history (filename,prediction,confidence,timestamp) VALUES (?,?,?,?)",
-        (filename, prediction, confidence, str(datetime.datetime.now()))
-    )
+    c.execute("""
+        INSERT INTO history (filename, prediction, confidence, timestamp)
+        VALUES (?, ?, ?, ?)
+    """, (filename, prediction, confidence, str(datetime.datetime.now())))
     conn.commit()
     conn.close()
 
-    return render_template("result.html",
-                           prediction=prediction,
-                           confidence=confidence,
-                           filename=filename,
-                           heatmap=heatmap_filename,
-                           risk=risk,
-                           instruction=instruction,
-                           all_probs=all_probs)
+    return render_template(
+        "result.html",
+        prediction=prediction,
+        confidence=confidence,
+        filename=filename,
+        heatmap=heatmap_filename,
+        risk=risk,
+        instruction=instruction
+    )
 
+# ---------------- DASHBOARD ----------------
 @app.route("/dashboard")
 def dashboard():
     conn = sqlite3.connect("database.db")
@@ -194,59 +235,163 @@ def dashboard():
 
     conn.close()
 
-    return render_template("dashboard.html",
-                           total=total,
-                           data=data,
-                           logs=logs)
+    last_updated = logs[0][4] if logs else None
 
-# ---------------- PDF WITH IMAGES ----------------
-@app.route("/download_pdf")
-def download_pdf():
+    return render_template(
+        "dashboard.html",
+        total=total,
+        data=data,
+        last_updated=last_updated,
+        logs=logs
+    )
+
+# ---------------- EXTRA PAGES ----------------
+@app.route("/who-guidelines")
+def who():
+    return render_template("who.html")
+
+@app.route("/biomedical-rules")
+def biomedical():
+    return render_template("biomedical.html")
+
+@app.route("/privacy-policy")
+def privacy():
+    return render_template("privacy.html")
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+@app.route("/delete/<int:id>")
+def delete(id):
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("DELETE FROM history WHERE id=?", (id,))
+    conn.commit()
+    conn.close()
+    return redirect("/dashboard")
+
+@app.route("/export-pdf")
+def export_pdf():
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image as RLImage, Spacer
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    import os
+    import sqlite3
 
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("SELECT * FROM history")
+    c.execute("SELECT filename, prediction, confidence, timestamp FROM history")
     data = c.fetchall()
     conn.close()
 
-    filename = "history.pdf"
-    pdf = SimpleDocTemplate(filename, pagesize=letter)
+    file_path = "static/report.pdf"
+    doc = SimpleDocTemplate(file_path, pagesize=letter)
+
+    styles = getSampleStyleSheet()
+
+    # custom style for table text wrapping
+    cell_style = ParagraphStyle(
+        'cell',
+        fontSize=8,
+        leading=10,
+        wordWrap='CJK',  # important for wrapping
+    )
+
+    title = Paragraph("SafeWaste AI - Scan Report", styles["Title"])
 
     elements = []
-    style = getSampleStyleSheet()
+    elements.append(title)
+    elements.append(Spacer(1, 12))
 
-    elements.append(Paragraph("Waste Classification History", style['Title']))
-
-    table_data = [["Image", "Prediction", "Confidence", "Timestamp"]]
+    table_data = [
+        [
+            "Image",
+            Paragraph("Filename", cell_style),
+            Paragraph("Prediction", cell_style),
+            Paragraph("Confidence", cell_style),
+            Paragraph("Timestamp", cell_style)
+        ]
+    ]
 
     for row in data:
-        file_name = row[1]
-        prediction = row[2]
-        confidence = str(row[3]) + "%"
-        timestamp = row[4]
+        filename, prediction, confidence, timestamp = row
 
-        image_path = os.path.join("static/uploads", file_name)
+        img_path = os.path.join("static/uploads", filename)
 
-        if os.path.exists(image_path):
-            img = RLImage(image_path, width=90, height=90)
+        if os.path.exists(img_path):
+            img = RLImage(img_path, width=40, height=40)
         else:
-            img = "No Image"
+            img = Paragraph("No Image", cell_style)
 
-        table_data.append([img, prediction, confidence, timestamp])
+        table_data.append([
+            img,
+            Paragraph(str(filename), cell_style),
+            Paragraph(str(prediction), cell_style),
+            Paragraph(f"{confidence}%", cell_style),
+            Paragraph(str(timestamp), cell_style)
+        ])
 
-    table = Table(table_data, colWidths=[100, 120, 80, 180])
+    # better balanced column widths
+    table = Table(table_data, colWidths=[60, 120, 120, 80, 140], repeatRows=1)
 
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.grey),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.whitesmoke),
-        ('GRID', (0,0), (-1,-1), 1, colors.black),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
+        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN", (0, 0), (-1, 0), "CENTER"),
+
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
     ]))
 
     elements.append(table)
-    pdf.build(elements)
 
-    return send_file(filename, as_attachment=True)
+    doc.build(elements)
+
+    return send_file(file_path, as_attachment=True)
+
+@app.route("/delete-multiple", methods=["POST"])
+def delete_multiple():
+    data = request.get_json()
+    ids = data.get("ids", [])
+
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+
+    c.executemany("DELETE FROM history WHERE id=?", [(i,) for i in ids])
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"status": "success"})
+
+@app.route("/feedback", methods=["POST"])
+def feedback():
+    image = request.form.get("image")
+    prediction = request.form.get("prediction")
+    confidence = request.form.get("confidence")
+    corrected = request.form.get("correct_label")
+
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+
+    c.execute("""
+        INSERT INTO feedback (filename, prediction, corrected, confidence, timestamp)
+        VALUES (?, ?, ?, ?, ?)
+    """, (image, prediction, corrected, confidence, str(datetime.datetime.now())))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/dashboard?msg=correction_saved")
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":

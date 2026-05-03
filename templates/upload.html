@@ -1,128 +1,301 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<link rel="stylesheet" href="/static/style.css">
-
-<style>
-.camera-container {
-    display: none;
-    text-align: center;
-}
-
-video {
-    width: 300px;
-    border-radius: 12px;
-}
-
-canvas {
-    display: none;
-}
-
-.preview-img {
-    width: 200px;
-    margin-top: 10px;
-    border-radius: 10px;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload & Scan — SafeWaste AI</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
-
 <body class="fade">
 
-<div class="card">
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" id="navbar">
+  <a href="/" class="nav-logo">
+    <div class="logo-icon">
+      <img src="/static/logo.png" alt="SafeWaste AI Logo">
+    </div>
+    SafeWaste <span class="accent">AI</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/#features">Features</a></li>
+    <li><a href="/upload" class="active">Upload</a></li>
+    <li><a href="/dashboard">Dashboard</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="/dashboard" class="btn btn-outline btn-sm">Dashboard</a>
+    <a href="/upload" class="btn btn-primary btn-sm">Start Scan</a>
+  </div>
+</nav>
 
-<h2>📷 Smart Waste Scanner</h2>
+<!-- ===== UPLOAD PAGE ===== -->
+<main class="upload-section fade-up">
+  <div class="upload-section-inner">
 
-<form action="/predict" method="POST" enctype="multipart/form-data" id="uploadForm">
+    <!-- Page Title -->
+    <div class="section-header" style="margin-bottom: 40px; text-align: left; max-width: none;">
+      <div class="section-label">🔬 Waste Scanner</div>
+      <h1 class="section-title" style="font-size: 1.9rem;">Upload or Capture Waste Image</h1>
+      <p class="section-desc" style="font-size: 0.9rem;">Provide a clear image of the waste item using file upload or live camera. Our AI will classify and guide disposal in seconds.</p>
+    </div>
 
-<input type="file" name="image" id="fileInput" hidden>
+    <!-- Flask form — keep route and enctype intact -->
+    <form action="/predict" method="POST" enctype="multipart/form-data" id="scanForm">
+      <input type="file" name="image" id="fileInput" accept="image/*" hidden>
+      <!-- Hidden field to receive canvas capture -->
+      <input type="hidden" name="captured" id="capturedData">
 
-<!-- BUTTONS -->
-<button type="button" class="btn" onclick="startCamera()">📷 Open Camera</button>
-<button type="button" class="btn secondary" onclick="openGallery()">📁 Upload</button>
+      <!-- TWO COLUMN: Upload | Camera -->
+      <div class="upload-grid">
 
-<br><br>
+        <!-- ===== LEFT: File Upload ===== -->
+        <div class="upload-panel">
+          <div class="upload-panel-title">
+            <div class="panel-icon pi-orange">📁</div>
+            File Upload
+          </div>
 
-<!-- CAMERA -->
-<div class="camera-container" id="cameraBox">
-    <video id="video" autoplay></video><br>
+          <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <span class="dz-icon">📂</span>
+            <h4>Drag & Drop or Browse</h4>
+            <p>Drop your waste image here or click to browse from your device</p>
+            <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">
+              Choose File
+            </button>
+            <p class="dz-types">Supports: JPG, PNG, WEBP, BMP — Max 10MB</p>
+          </div>
 
-    <button type="button" class="btn" onclick="captureImage()">📸 Capture</button>
-    <button type="button" class="btn secondary" onclick="stopCamera()">❌ Close</button>
-</div>
+          <!-- File Preview -->
+          <div class="file-preview" id="filePreview">
+            <img id="previewImg" src="" alt="Preview">
+            <p class="file-preview-name" id="previewName">—</p>
+            <button type="button" class="btn btn-outline btn-sm" onclick="clearFile()" style="margin-top: 10px; width: 100%;">
+              ✕ Remove File
+            </button>
+          </div>
+        </div>
 
-<!-- PREVIEW -->
-<img id="preview" class="preview-img">
+        <!-- ===== RIGHT: Live Camera ===== -->
+        <div class="upload-panel camera-panel">
+          <div class="upload-panel-title">
+            <div class="panel-icon pi-green">📷</div>
+            Live Camera Capture
+          </div>
 
-<br><br>
+          <div class="camera-view">
+            <div class="camera-placeholder" id="camPlaceholder">
+              <div class="cam-icon">📷</div>
+              <p>Camera is off. Click "Start Camera" to begin.</p>
+            </div>
+            <video id="video" autoplay playsinline muted></video>
+            <!-- Capture overlay flash -->
+            <div id="flashOverlay" style="position:absolute;inset:0;background:white;opacity:0;pointer-events:none;border-radius:var(--radius-lg);transition:opacity 0.15s;"></div>
+          </div>
 
-<button type="submit" class="btn">Predict</button>
+          <!-- Captured preview -->
+          <div class="file-preview" id="capturePreview" style="margin-bottom: 16px;">
+            <img id="capturedImg" src="" alt="Captured">
+            <p class="file-preview-name">Image captured ✅</p>
+          </div>
 
-</form>
+          <div class="camera-controls">
+            <button type="button" class="btn btn-secondary" id="startCamBtn" onclick="startCamera()">
+              📷 Start Camera
+            </button>
+            <button type="button" class="btn btn-primary" id="captureBtn" onclick="capture()" disabled>
+              📸 Capture
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="stopCamBtn" onclick="stopCamera()" style="display:none;">
+              ⏹ Stop
+            </button>
+          </div>
+        </div>
+      </div>
 
-<br>
-<a href="/"><button class="btn secondary">Home</button></a>
+      <!-- ===== PREDICT BAR ===== -->
+      <div class="predict-bar">
+        <div class="predict-info">
+          <h3>Ready to Analyze?</h3>
+          <p id="readyStatus" style="color: var(--text-muted); font-size: 0.85rem;">Select an image via upload or camera capture above, then click Predict.</p>
+        </div>
+        <button type="submit" class="predict-btn" id="predictBtn">
+          <span class="btn-text">🔬 Predict Waste Category</span>
+          <span class="spinner"></span>
+        </button>
+      </div>
+    </form>
 
-</div>
+    <!-- Instructions -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 28px;">
+      <div style="background: white; border-radius: var(--radius-md); padding: 20px; border: 1px solid var(--border); text-align: center;">
+        <div style="font-size: 1.8rem; margin-bottom: 8px;">📸</div>
+        <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--text); margin-bottom: 6px;">Clear Image</h4>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">Use good lighting and a clean background for best accuracy.</p>
+      </div>
+      <div style="background: white; border-radius: var(--radius-md); padding: 20px; border: 1px solid var(--border); text-align: center;">
+        <div style="font-size: 1.8rem; margin-bottom: 8px;">🎯</div>
+        <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--text); margin-bottom: 6px;">Single Item</h4>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">Capture one waste item at a time for highest detection accuracy.</p>
+      </div>
+      <div style="background: white; border-radius: var(--radius-md); padding: 20px; border: 1px solid var(--border); text-align: center;">
+        <div style="font-size: 1.8rem; margin-bottom: 8px;">⚡</div>
+        <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--text); margin-bottom: 6px;">Instant Result</h4>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">AI classification completes in under 2 seconds with disposal guide.</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-bottom">
+      <span>© 2025 SafeWaste AI. All rights reserved.</span>
+      <span>Built for Healthcare Safety 🏥</span>
+    </div>
+  </div>
+</footer>
 
 <script>
-let video = document.getElementById("video");
-let cameraBox = document.getElementById("cameraBox");
-let preview = document.getElementById("preview");
-let fileInput = document.getElementById("fileInput");
+  // ---- Navbar scroll ----
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+  });
 
-let stream;
+  // ---- Drag & Drop ----
+  const dropZone = document.getElementById('dropZone');
 
-// 🎥 START CAMERA
-async function startCamera() {
-    cameraBox.style.display = "block";
-
-    stream = await navigator.mediaDevices.getUserMedia({
-        video: true
+  ['dragenter','dragover'].forEach(ev => {
+    dropZone.addEventListener(ev, e => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
     });
-
-    video.srcObject = stream;
-}
-
-// ❌ STOP CAMERA
-function stopCamera() {
-    cameraBox.style.display = "none";
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+  });
+  ['dragleave','drop'].forEach(ev => {
+    dropZone.addEventListener(ev, e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+    });
+  });
+  dropZone.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setFilePreview(file);
+      // Assign to input
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('fileInput').files = dt.files;
     }
-}
+  });
 
-// 📸 CAPTURE IMAGE
-function captureImage() {
-    let canvas = document.createElement("canvas");
+  // ---- File input change ----
+  document.getElementById('fileInput').addEventListener('change', function () {
+    if (this.files[0]) {
+      setFilePreview(this.files[0]);
+      clearCapturePreview(); // Clear camera capture if user picks file
+    }
+  });
+
+  function setFilePreview(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('previewImg').src = e.target.result;
+      document.getElementById('previewName').textContent = file.name;
+      document.getElementById('filePreview').style.display = 'block';
+      dropZone.style.display = 'none';
+      updateReadyStatus('file');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearFile() {
+    document.getElementById('fileInput').value = '';
+    document.getElementById('filePreview').style.display = 'none';
+    document.getElementById('dropZone').style.display = 'block';
+    updateReadyStatus('none');
+  }
+
+  // ---- Camera ----
+  let stream = null;
+  const video = document.getElementById('video');
+
+  async function startCamera() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      video.srcObject = stream;
+      video.style.display = 'block';
+      document.getElementById('camPlaceholder').style.display = 'none';
+      document.getElementById('captureBtn').disabled = false;
+      document.getElementById('startCamBtn').style.display = 'none';
+      document.getElementById('stopCamBtn').style.display = 'flex';
+    } catch (err) {
+      alert('Camera access denied or not available: ' + err.message);
+    }
+  }
+
+  function stopCamera() {
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
+    video.srcObject = null;
+    video.style.display = 'none';
+    document.getElementById('camPlaceholder').style.display = 'flex';
+    document.getElementById('captureBtn').disabled = true;
+    document.getElementById('startCamBtn').style.display = 'flex';
+    document.getElementById('stopCamBtn').style.display = 'none';
+  }
+
+  function capture() {
+    if (!stream) return;
+
+    // Flash effect
+    const flash = document.getElementById('flashOverlay');
+    flash.style.opacity = '0.85';
+    setTimeout(() => flash.style.opacity = '0', 200);
+
+    const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
 
-    let ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0);
+    canvas.toBlob(blob => {
+      const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' });
 
-    canvas.toBlob(function(blob) {
-        let file = new File([blob], "capture.jpg", { type: "image/jpeg" });
+      // Assign to file input
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('fileInput').files = dt.files;
 
-        let dt = new DataTransfer();
-        dt.items.add(file);
-        fileInput.files = dt.files;
+      // Show capture preview
+      const url = canvas.toDataURL('image/jpeg');
+      document.getElementById('capturedImg').src = url;
+      document.getElementById('capturePreview').style.display = 'block';
 
-        preview.src = URL.createObjectURL(file);
-    });
-}
+      // Hide file preview if any
+      clearFile();
+      updateReadyStatus('camera');
+    }, 'image/jpeg', 0.92);
+  }
 
-// 📁 GALLERY
-function openGallery() {
-    fileInput.click();
-}
+  function clearCapturePreview() {
+    document.getElementById('capturePreview').style.display = 'none';
+  }
 
-// SHOW PREVIEW
-fileInput.addEventListener("change", function() {
-    if (this.files[0]) {
-        preview.src = URL.createObjectURL(this.files[0]);
-    }
-});
+  function updateReadyStatus(source) {
+    const el = document.getElementById('readyStatus');
+    if (source === 'file') el.innerHTML = '✅ <strong>File selected.</strong> Click Predict to classify.';
+    else if (source === 'camera') el.innerHTML = '✅ <strong>Image captured.</strong> Click Predict to classify.';
+    else el.textContent = 'Select an image via upload or camera capture above, then click Predict.';
+  }
+
+  // ---- Form submit loading state ----
+  document.getElementById('scanForm').addEventListener('submit', function (e) {
+    const btn = document.getElementById('predictBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+  });
 </script>
-
 </body>
 </html>

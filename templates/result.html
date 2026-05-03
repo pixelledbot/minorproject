@@ -1,142 +1,179 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<link rel="stylesheet" href="/static/style.css">
-
-<style>
-/* image styling */
-.preview {
-    width: 220px;
-    display: block;
-    margin: 10px auto;
-    border-radius: 12px;
-    transition: 0.3s ease;
-}
-
-/* heatmap container */
-.heatmap-box {
-    text-align: center;
-    margin-top: 10px;
-}
-
-/* toggle button */
-.toggle-btn {
-    margin: 12px auto;
-    display: block;
-    font-size: 13px;
-    padding: 6px 14px;
-    cursor: pointer;
-    opacity: 0.85;
-}
-
-.toggle-btn:hover {
-    opacity: 1;
-}
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prediction Result — SafeWaste AI</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body class="fade">
 
-<div class="card">
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <a href="/" class="nav-logo">
+    <div class="logo-icon">
+      <img src="/static/logo.png" alt="SafeWaste AI Logo">
+    </div>
+    SafeWaste <span class="accent">AI</span>
+  </a>
 
-<h2>Prediction Result</h2>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/upload">Upload</a></li>
+    <li><a href="/dashboard">Dashboard</a></li>
+  </ul>
 
-<!-- ORIGINAL IMAGE -->
-<img id="main-img" src="/static/uploads/{{ filename }}" class="preview">
+  <div class="nav-cta">
+    <a href="/dashboard" class="btn btn-outline btn-sm">Dashboard</a>
+    <a href="/upload" class="btn btn-primary btn-sm">New Scan</a>
+  </div>
+</nav>
 
-<!-- HEATMAP -->
-<div class="heatmap-box">
-    <img id="heatmap-img" src="/static/uploads/{{ heatmap }}" class="preview" style="display:none;">
-</div>
+<!-- MAIN -->
+<main class="result-page fade-up">
+  <div class="result-page-inner">
 
-<!-- TOGGLE BUTTON -->
-<button id="toggleBtn" class="btn secondary toggle-btn" onclick="toggleHeatmap()">
-    Show Heatmap
-</button>
+    <!-- HEADER -->
+    <div class="result-page-header">
+      <div>
+        <h1>Analysis Complete</h1>
+        <p>AI classification result for submitted waste sample</p>
+      </div>
 
-<h3 class="result {{ prediction }}">
-    {{ prediction | capitalize }}
-</h3>
+      <div>
+        <a href="/upload" class="btn btn-outline btn-sm">New Scan</a>
+        <a href="/dashboard" class="btn btn-secondary btn-sm">Dashboard</a>
+      </div>
+    </div>
 
-<!-- Confidence -->
-<div class="bar">
-    <div class="fill" id="main-bar"></div>
-</div>
-<p id="confidence-text">{{ confidence }}%</p>
+    <!-- GRID -->
+    <div class="result-grid">
 
-<!-- Risk -->
-<div class="risk {{ risk }}">
-    Risk: {{ risk }}
-</div>
+      <!-- LEFT -->
+      <div>
 
-<h4>♻️ Disposal Instructions</h4>
-<p>{{ instruction }}</p>
+        <div class="result-image-card">
+          <h3>Scanned Image</h3>
 
-<!-- SAFE JSON -->
-<script id="prob-data" type="application/json">
-{{ all_probs | tojson }}
-</script>
+          {% if filename %}
+          <img id="mainImage" src="/static/uploads/{{ filename }}" alt="Scanned image">
 
-<script id="main-conf" type="application/json">
-{{ confidence }}
-</script>
+          {% if heatmap %}
+          <img id="heatmapImage"
+               src="/static/uploads/{{ heatmap }}"
+               style="display:none;">
+          {% endif %}
+          {% endif %}
+        </div>
 
-<h4>Confidence Breakdown</h4>
-<div id="prob-container"></div>
+        <!-- QUICK STATS -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px;">
+          <div style="background:white; padding:14px; border-radius:10px;">
+            ⚡ <b>&lt;2s</b>
+            <div style="font-size:12px;">Processing Time</div>
+          </div>
 
-<br>
+          <!-- ✅ REPLACED MODEL BOX WITH BUTTON -->
+          <div style="background:white; padding:14px; border-radius:10px; text-align:center;">
+            <button class="btn btn-primary btn-sm" onclick="toggleHeatmap()" id="heatmapBtn">
+              View Heatmap
+            </button>
+            <div style="font-size:12px; margin-top:6px;">AI Visualization</div>
+          </div>
+        </div>
 
-<a href="/"><button class="btn">Try Again</button></a>
-<a href="/dashboard"><button class="btn secondary">Dashboard</button></a>
+      </div>
 
-</div>
+      <!-- RIGHT -->
+      <div class="result-main-card">
 
+        <h2>Prediction Result</h2>
+
+        <div class="category-badge">
+          {{ prediction | capitalize if prediction else "Unknown" }}
+        </div>
+
+        {% set conf = confidence | default(0) | int %}
+
+        <!-- CONFIDENCE -->
+        <div class="confidence-section">
+          <div class="confidence-header">
+            <span>Confidence</span>
+            <span>{{ conf }}%</span>
+          </div>
+
+          <div class="confidence-track">
+            <div class="confidence-fill" style="width: {{ conf }}%;"></div>
+          </div>
+        </div>
+
+        <!-- INSTRUCTION -->
+        <div class="instruction-box">
+          <h4>Disposal Instruction</h4>
+          <p>{{ instruction }}</p>
+        </div>
+
+        <!-- LOW CONFIDENCE -->
+        {% if confidence and confidence < 50 %}
+        <div class="warning-box">
+          <h4>Low Confidence Detection</h4>
+          <p>Please verify and correct classification if needed.</p>
+
+          <form action="/feedback" method="POST">
+            <input type="hidden" name="image" value="{{ filename }}">
+            <input type="hidden" name="prediction" value="{{ prediction }}">
+            <input type="hidden" name="confidence" value="{{ confidence }}">
+
+            <select name="correct_label" required>
+              <option value="">Select correct category</option>
+              <option value="general">General</option>
+              <option value="infectious">Infectious</option>
+              <option value="pharmaceutical">Pharmaceutical</option>
+              <option value="sharps">Sharps</option>
+            </select>
+
+            <button type="submit" class="btn btn-primary btn-sm">
+              Submit Correction
+            </button>
+          </form>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-bottom">
+    <span>© 2026 SafeWaste AI</span>
+    <span>Built for Healthcare Safety</span>
+  </div>
+</footer>
+
+<!-- JS -->
 <script>
-// MAIN CONFIDENCE BAR
-const conf = JSON.parse(
-    document.getElementById("main-conf").textContent
-);
-document.getElementById("main-bar").style.width = conf + "%";
+let heatmapVisible = false;
 
-// PROBABILITY BARS
-const probs = JSON.parse(
-    document.getElementById("prob-data").textContent
-);
-
-const container = document.getElementById("prob-container");
-
-for (let key in probs) {
-    let bar = document.createElement("div");
-    bar.className = "bar small";
-
-    let fill = document.createElement("div");
-    fill.className = "fill";
-    fill.style.width = probs[key] + "%";
-
-    let label = document.createElement("span");
-    label.innerText = key + " (" + probs[key] + "%)";
-
-    bar.appendChild(label);
-    bar.appendChild(fill);
-    container.appendChild(bar);
-}
-
-// 🔥 SMOOTH TOGGLE HEATMAP
 function toggleHeatmap() {
-    const original = document.getElementById("main-img");
-    const heatmap = document.getElementById("heatmap-img");
-    const btn = document.getElementById("toggleBtn");
+  const img = document.getElementById("mainImage");
+  const heatmap = document.getElementById("heatmapImage");
+  const btn = document.getElementById("heatmapBtn");
 
-    if (heatmap.style.display === "none") {
-        heatmap.style.display = "block";
-        original.style.display = "none";
-        btn.innerText = "Show Original";
-    } else {
-        heatmap.style.display = "none";
-        original.style.display = "block";
-        btn.innerText = "Show Heatmap";
-    }
+  if (!img || !heatmap) return;
+
+  if (!heatmapVisible) {
+    img.src = heatmap.src;
+    btn.innerText = "Hide Heatmap";
+    heatmapVisible = true;
+  } else {
+    img.src = "/static/uploads/{{ filename }}";
+    btn.innerText = "View Heatmap";
+    heatmapVisible = false;
+  }
 }
 </script>
 
