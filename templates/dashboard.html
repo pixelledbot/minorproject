@@ -4,416 +4,1065 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — SafeWaste AI</title>
+
   <link rel="stylesheet" href="/static/style.css">
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-  .modal-box {
-    max-width: 520px;
-    width: 90%;
-  }
 
-  .modal-box img {
-    max-width: 100%;
-    max-height: 320px;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    display: block;
-    margin: auto;
-  }
+    .modal-box {
+      max-width: 520px;
+      width: 90%;
+    }
 
-   .legend-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin-right: 8px;
-    flex-shrink: 0;
-    border: 1.5px solid rgba(0,0,0,0.7); 
-  }
+    .modal-box img {
+      max-width: 100%;
+      max-height: 320px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
+      margin: auto;
+    }
 
-</style>
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      flex-shrink: 0;
+      border: 1.5px solid rgba(0,0,0,0.7);
+    }
+
+    .category-folders{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:18px;
+      margin:28px 0;
+    }
+
+    .cat-folder{
+      background:linear-gradient(
+        135deg,
+        rgba(34,197,94,0.12),
+        rgba(16,185,129,0.08)
+      );
+
+      border:1px solid rgba(34,197,94,0.25);
+
+      border-radius:18px;
+
+      padding:22px;
+
+      cursor:pointer;
+
+      transition:0.25s ease;
+
+      backdrop-filter:blur(6px);
+    }
+
+    .cat-folder:hover{
+      transform:translateY(-4px);
+      border-color:#22c55e;
+      box-shadow:0 10px 30px rgba(34,197,94,0.15);
+    }
+
+    .cat-folder h4{
+      font-size:0.92rem;
+      color:#166534;
+      margin-bottom:6px;
+      font-weight:800;
+      letter-spacing:0.4px;
+    }
+
+    .cat-folder p{
+      font-size:0.84rem;
+      color:#15803d;
+      font-weight:600;
+    }
+
+    .chart-card,
+    .table-card{
+      background:white;
+      border-radius:20px;
+      padding:24px;
+      border:1px solid var(--border);
+    }
+
+    .dash-chart-table{
+      display:grid;
+      grid-template-columns:380px 1fr;
+      gap:24px;
+      align-items:start;
+    }
+
+    .chart-wrapper{
+      width:100%;
+      max-width:280px;
+      margin:auto;
+    }
+
+    .chart-legend{
+      margin-top:20px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .legend-item{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    .legend-label{
+      display:flex;
+      align-items:center;
+      font-size:0.88rem;
+      font-weight:600;
+      color:var(--text);
+    }
+
+    .legend-count{
+      font-size:0.82rem;
+      font-weight:700;
+    }
+
+    .table-thumb{
+      width:52px;
+      height:52px;
+      object-fit:cover;
+      border-radius:10px;
+      cursor:pointer;
+      border:1px solid var(--border);
+    }
+
+    .confidence-mini{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .conf-bar{
+      width:90px;
+      height:8px;
+      border-radius:999px;
+      background:#e5e7eb;
+      overflow:hidden;
+    }
+
+    .conf-fill{
+      height:100%;
+      background:#22c55e;
+      border-radius:999px;
+    }
+
+    .conf-fill.med{
+      background:#f59e0b;
+    }
+
+    .conf-fill.low{
+      background:#ef4444;
+    }
+
+    .table-badge{
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:0.75rem;
+      font-weight:700;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .tb-general{
+      background:#e5e7eb;
+      color:#111827;
+    }
+
+    .tb-infectious{
+      background:#fef3c7;
+      color:#92400e;
+    }
+
+    .tb-pharmaceutical{
+      background:#dbeafe;
+      color:#1d4ed8;
+    }
+
+    .tb-sharps{
+      background:#fee2e2;
+      color:#991b1b;
+    }
+
+    .table-search{
+      padding:10px 14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      font-size:0.84rem;
+      outline:none;
+    }
+
+    .modal-overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.7);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:999;
+    }
+
+    .modal-overlay.open{
+      display:flex;
+    }
+
+    .modal-box{
+      background:white;
+      border-radius:20px;
+      padding:20px;
+      position:relative;
+    }
+
+    .modal-close{
+      position:absolute;
+      top:12px;
+      right:12px;
+      width:34px;
+      height:34px;
+      border:none;
+      border-radius:50%;
+      background:#ef4444;
+      color:white;
+      cursor:pointer;
+      font-size:1rem;
+    }
+
+    @media(max-width:1000px){
+
+      .dash-chart-table{
+        grid-template-columns:1fr;
+      }
+
+      .category-folders{
+        grid-template-columns:repeat(2,1fr);
+      }
+    }
+
+    @media(max-width:650px){
+
+      .category-folders{
+        grid-template-columns:1fr;
+      }
+    }
+
+  </style>
 </head>
+
 <body class="fade">
 
 <!-- ===== NAVBAR ===== -->
 <nav class="navbar" id="navbar">
+
   <a href="/" class="nav-logo">
     <div class="logo-icon">
-      <img src="/static/logo.png" alt="SafeWaste AI Logo">
+      <img src="/static/logo.png" alt="Logo">
     </div>
+
     SafeWaste <span class="accent">AI</span>
   </a>
+
   <ul class="nav-links">
     <li><a href="/">Home</a></li>
     <li><a href="/#features">Features</a></li>
     <li><a href="/upload">Upload</a></li>
     <li><a href="/dashboard" class="active">Dashboard</a></li>
   </ul>
+
   <div class="nav-cta">
-    <a href="/upload" class="btn btn-primary btn-sm">🔬 New Scan</a>
+    <a href="/upload" class="btn btn-primary btn-sm">
+      NEW SCAN
+    </a>
   </div>
+
 </nav>
 
 <!-- ===== DASHBOARD ===== -->
 <main class="dashboard-page fade-up">
+
   <div class="dashboard-inner">
 
-    <!-- Header -->
+    <!-- HEADER -->
     <div class="dashboard-header">
+
       <div>
-        <h1>Analytics Dashboard</h1>
-        <p>Real-time waste classification overview and historical scan logs</p>
+        <h1>ANALYTICS DASHBOARD</h1>
+
+        <p>
+          Real-time waste classification overview and historical scan logs
+        </p>
       </div>
-      <div style="display:flex; gap:12px; align-items:center;">
-        <span id="lastUpdated" style="font-size:0.82rem; color:var(--text-muted); background:white; padding:8px 16px; border-radius:var(--radius-sm); border:1px solid var(--border);">
-            📅 Last updated: {{ last_updated if last_updated else "No data yet" }}
-        </span>
-       
-      </div>
+
+      <span id="lastUpdated"
+        style="
+          font-size:0.82rem;
+          color:var(--text-muted);
+          background:white;
+          padding:8px 16px;
+          border-radius:12px;
+          border:1px solid var(--border);
+        ">
+        📅 Last updated:
+        {{ last_updated if last_updated else "No data yet" }}
+      </span>
+
     </div>
 
-    <!-- ===== STAT CARDS ===== -->
+    <!-- ===== STATS ===== -->
     <div class="dash-stats-grid">
+
       <div class="stat-card">
         <div class="stat-icon orange">📊</div>
+
         <div class="stat-info">
-          <div class="stat-value">{{ total if total else 0 }}</div>
+          <div class="stat-value">
+            {{ total if total else 0 }}
+          </div>
+
           <div class="stat-label">Total Scans</div>
+
           <div class="stat-change up">↑ All time</div>
         </div>
       </div>
+
       <div class="stat-card">
         <div class="stat-icon green">✅</div>
+
         <div class="stat-info">
           <div class="stat-value" id="highConfCount">—</div>
-          <div class="stat-label">High Confidence (&gt;70%)</div>
+
+          <div class="stat-label">
+            High Confidence (>70%)
+          </div>
+
           <div class="stat-change up" id="highConfPct">—</div>
         </div>
       </div>
+
       <div class="stat-card">
         <div class="stat-icon red">⚠️</div>
+
         <div class="stat-info">
           <div class="stat-value" id="lowConfCount">—</div>
-          <div class="stat-label">Low Confidence (&lt;70%)</div>
-          <div class="stat-change neutral">Needs review</div>
+
+          <div class="stat-label">
+            Low Confidence (<70%)
+          </div>
+
+          <div class="stat-change neutral">
+            Needs review
+          </div>
         </div>
       </div>
+
       <div class="stat-card">
         <div class="stat-icon blue">🏷️</div>
+
         <div class="stat-info">
           <div class="stat-value" id="topCat">—</div>
+
           <div class="stat-label">Most Common Type</div>
-          <div class="stat-change neutral">Dominant category</div>
+
+          <div class="stat-change neutral">
+            Dominant category
+          </div>
         </div>
       </div>
+
+    </div>
+
+    <!-- ===== CATEGORY FOLDERS ===== -->
+    <div class="category-folders">
+
+      <div class="cat-folder" onclick="quickFilter('general')">
+        <div>
+          <h4>GENERAL</h4>
+          <p id="generalCount">0 scans</p>
+        </div>
+      </div>
+
+      <div class="cat-folder" onclick="quickFilter('infectious')">
+        <div>
+          <h4>INFECTIOUS</h4>
+          <p id="infectiousCount">0 scans</p>
+        </div>
+      </div>
+
+      <div class="cat-folder" onclick="quickFilter('pharmaceutical')">
+        <div>
+          <h4>PHARMACEUTICAL</h4>
+          <p id="pharmaceuticalCount">0 scans</p>
+        </div>
+      </div>
+
+      <div class="cat-folder" onclick="quickFilter('sharps')">
+        <div>
+          <h4>SHARPS</h4>
+          <p id="sharpsCount">0 scans</p>
+        </div>
+      </div>
+
     </div>
 
     <!-- ===== CHART + TABLE ===== -->
     <div class="dash-chart-table">
 
-      <!-- Doughnut Chart -->
+      <!-- ===== CHART ===== -->
       <div class="chart-card">
+
         <h3>📊 Category Distribution</h3>
+
         <div class="chart-wrapper">
           <canvas id="wasteChart"></canvas>
         </div>
-        <div class="chart-legend" id="chartLegend">
-  
-          <!-- Populated by JS -->
-        </div>
-        <!-- PDF EXPORT (MOVED UNDER LEGEND) -->
-<div style="text-align:center; margin-top:16px;">
-  <a href="/export-pdf" class="btn btn-primary btn-sm">
-    📄 Export Data as PDF
-  </a>
+
+        <div class="chart-legend" id="chartLegend"></div>
+
+        <div
+          style="
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+            margin-top:18px;
+          ">
+
+          <a href="/export-pdf"
+             class="btn btn-primary btn-sm"
+             style="
+               width:100%;
+               justify-content:center;
+             ">
+            📄 Export Data as PDF
+          </a>
+
+          <button
+  onclick="sendEmailReport()"
+  class="btn btn-outline btn-sm"
+  style="
+    width:100%;
+    justify-content:center;
+  "
+>
+  📧 Send Report to Email
+</button>
+
+<div
+  id="emailStatus"
+  style="
+    display:none;
+    background:#dcfce7;
+    color:#166534;
+    border:1px solid #86efac;
+    padding:10px;
+    border-radius:10px;
+    font-size:0.82rem;
+    text-align:center;
+    font-weight:600;
+  "
+>
+  ✅ Report Sent Successfully
 </div>
+        </div>
+
       </div>
 
-      <!-- Data Table -->
+      <!-- ===== TABLE ===== -->
       <div class="table-card">
+
         <div class="table-card-header">
-          <h3>🗂️ Scan History</h3>
-          <input type="text" class="table-search" placeholder="🔍 Search..." id="tableSearch" oninput="filterTable(this.value)">
+
+          <h3>SCAN HISTORY</h3>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+
+            <input
+              type="text"
+              class="table-search"
+              placeholder="Search..."
+              id="tableSearch"
+              oninput="applyFilters()"
+            >
+
+            <select
+              id="categoryFilter"
+              class="table-search"
+              onchange="applyFilters()"
+            >
+              <option value="all">All Categories</option>
+              <option value="general">General</option>
+              <option value="infectious">Infectious</option>
+              <option value="pharmaceutical">Pharmaceutical</option>
+              <option value="sharps">Sharps</option>
+            </select>
+
+          </div>
+
         </div>
-        <div style="overflow-x: auto;">
+
+        <div style="overflow-x:auto;">
+
           <table class="data-table" id="dataTable">
+
             <thead>
               <tr>
+
                 <th>
                   <input type="checkbox" onclick="toggleAll(this)">
                 </th>
-              
+
                 <th>Image</th>
                 <th>Filename</th>
                 <th>Category</th>
                 <th>Confidence</th>
                 <th>Timestamp</th>
+
               </tr>
             </thead>
+
             <tbody>
+
               {% for log in logs %}
+
               <tr>
+
                 <td>
-                  <input type="checkbox" class="row-check" value="{{ log[0] }}">
-                  </td>
+                  <input
+                    type="checkbox"
+                    class="row-check"
+                    value="{{ log[0] }}"
+                  >
+                </td>
+
                 <td>
                   <img
                     src="/static/uploads/{{ log[1] }}"
                     class="table-thumb"
-                    alt="{{ log[2] }}"
                     onclick="openModal(this.src, '{{ log[2] }}', {{ log[3] }})"
-                    title="Click to preview"
                   >
                 </td>
-                <td style="font-size:0.8rem; color:var(--text-muted); max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ log[1] }}">
+
+                <td
+                  style="
+                    max-width:120px;
+                    overflow:hidden;
+                    text-overflow:ellipsis;
+                    white-space:nowrap;
+                    font-size:0.8rem;
+                    color:var(--text-muted);
+                  "
+                  title="{{ log[1] }}"
+                >
                   {{ log[1] }}
                 </td>
+
                 <td>
-                  <span class="table-badge tb-{{ log[2] | lower | replace(' ', '-') }}">
+                  <span class="table-badge tb-{{ log[2] | lower }}">
                     {{ log[2] | capitalize }}
                   </span>
                 </td>
+
                 <td>
+
                   <div class="confidence-mini">
+
                     <div class="conf-bar">
-                      <div class="conf-fill {% if log[3] < 50 %}low{% elif log[3] < 70 %}med{% endif %}"
-                           style="width:{{ log[3] }}%;"></div>
+
+                      <div
+                        class="conf-fill {% if log[3] < 50 %}low{% elif log[3] < 70 %}med{% endif %}"
+                        style="width:{{ log[3] }}%;"
+                      ></div>
+
                     </div>
+
                     <span>{{ log[3] }}%</span>
+
                   </div>
+
                 </td>
-                <td style="font-size:0.82rem; color:var(--text-muted); white-space:nowrap;">{{ log[4] }}</td>
-              
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="6" style="text-align:center; padding:48px; color:var(--text-muted);">
-                  <div style="font-size:2rem; margin-bottom:12px;">📭</div>
-                  <p style="font-size:0.9rem; font-weight:600; color:var(--text);">No scans yet</p>
-                  <p style="font-size:0.82rem; margin-top:4px;">Upload a waste image to get started</p>
-                  <a href="/upload" class="btn btn-primary btn-sm" style="margin-top:14px; display:inline-flex;">🔬 Start Scanning</a>
+
+                <td
+                  style="
+                    font-size:0.82rem;
+                    color:var(--text-muted);
+                    white-space:nowrap;
+                  "
+                >
+                  {{ log[4] }}
                 </td>
+
               </tr>
+
               {% endfor %}
+
             </tbody>
+
           </table>
+
         </div>
+
         <div style="text-align:center; margin-top:16px;">
-          <button onclick="toggleRows()" class="btn btn-outline btn-sm" id="viewBtn">
-                View More
+
+          <button
+            onclick="toggleRows()"
+            class="btn btn-outline btn-sm"
+            id="viewBtn"
+          >
+            View More
           </button>
+
         </div>
-        <button class="btn btn-primary btn-sm" onclick="deleteSelected()">
-  🗑️ Delete Selected
-</button>
+
+        <button
+          class="btn btn-primary btn-sm"
+          onclick="deleteSelected()"
+          style="margin-top:12px;"
+        >
+          🗑️ Delete Selected
+        </button>
+
       </div>
+
     </div>
 
   </div>
+
 </main>
 
-<!-- ===== IMAGE MODAL ===== -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+<!-- ===== MODAL ===== -->
+<div
+  class="modal-overlay"
+  id="modalOverlay"
+  onclick="closeModal(event)"
+>
+
   <div class="modal-box" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <img id="modalImg" src="" alt="Preview">
-    <div style="padding:14px 10px 6px; display:flex; align-items:center; justify-content:space-between;">
-      <span class="table-badge" id="modalBadge" style="font-size:0.88rem; padding:6px 14px;"></span>
-      <span id="modalConf" style="font-size:0.85rem; color:var(--text-muted); font-weight:600;"></span>
+
+    <button class="modal-close" onclick="closeModal()">
+      ✕
+    </button>
+
+    <img id="modalImg">
+
+    <div
+      style="
+        padding:14px 10px 6px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+      ">
+
+      <span
+        class="table-badge"
+        id="modalBadge"
+      ></span>
+
+      <span
+        id="modalConf"
+        style="
+          font-size:0.85rem;
+          color:var(--text-muted);
+          font-weight:600;
+        "
+      ></span>
+
     </div>
+
   </div>
+
 </div>
 
-<!-- ===== FOOTER ===== -->
-<footer class="footer" style="margin-top: 60px;">
-  <div class="footer-inner">
-    <div class="footer-bottom">
-      <span>© 2025 SafeWaste AI. All rights reserved.</span>
-      <span>Built for Healthcare Safety 🏥</span>
-    </div>
-  </div>
-</footer>
-
 <script>
-  // Navbar scroll
+
+  // ===== NAVBAR =====
   window.addEventListener('scroll', () => {
-    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+    document
+      .getElementById('navbar')
+      .classList.toggle('scrolled', window.scrollY > 20);
   });
 
-  // ---- Chart Data from Flask ----
+  // ===== CHART =====
   const rawData = {{ data | tojson }};
 
-  // rawData is expected as [[category, count], ...]
   const labels = rawData.map(x => x[0]);
   const counts = rawData.map(x => x[1]);
-  const total  = counts.reduce((a, b) => a + b, 0);
+
+  const total = counts.reduce((a,b)=>a+b,0);
 
   const PALETTE = {
-    general:        '#000000',
-    infectious:     '#ffcc00',
-    pharmaceutical: '#1d4ed8',
-    sharps:         '#ffffff',
+    general:'#000000',
+    infectious:'#ffcc00',
+    pharmaceutical:'#1d4ed8',
+    sharps:'#ffffff'
   };
-  const DEFAULT_COLORS = ['#000000','#ffcc00','#1d4ed8','#ffffff'];
 
-  const colors = labels.map((l, i) => PALETTE[l.toLowerCase()] || DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
+  const colors = labels.map(
+    l => PALETTE[l.toLowerCase()] || '#22c55e'
+  );
 
-  // ---- Doughnut Chart ----
-  const ctx = document.getElementById('wasteChart').getContext('2d');
+  const ctx = document
+    .getElementById('wasteChart')
+    .getContext('2d');
+
   new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: counts,
-        backgroundColor: colors,
-        borderColor: '#1f2937',
-        borderWidth: 0.5,
-        hoverOffset: 8,
+
+    type:'doughnut',
+
+    data:{
+      labels:labels,
+
+      datasets:[{
+        data:counts,
+        backgroundColor:colors,
+        borderColor:'#1f2937',
+        borderWidth:0.5,
+        hoverOffset:8
       }]
     },
-    options: {
-      responsive: true,
-      cutout: '68%',
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.label}: ${ctx.raw} (${total ? Math.round(ctx.raw / total * 100) : 0}%)`
+
+    options:{
+      responsive:true,
+
+      cutout:'68%',
+
+      plugins:{
+
+        legend:{
+          display:false
+        },
+
+        tooltip:{
+          callbacks:{
+            label:context=>{
+              const percent = total
+                ? Math.round(context.raw / total * 100)
+                : 0;
+
+              return ` ${context.label}: ${context.raw} (${percent}%)`;
+            }
           }
         }
+
       }
     }
+
   });
 
-  // ---- Legend ----
+  // ===== LEGEND =====
   const legendEl = document.getElementById('chartLegend');
+
   labels.forEach((label, i) => {
-    const pct = total ? Math.round(counts[i] / total * 100) : 0;
+
+    const pct = total
+      ? Math.round(counts[i] / total * 100)
+      : 0;
+
     legendEl.innerHTML += `
       <div class="legend-item">
+
         <div class="legend-label">
-          <span class="legend-dot" style="background:${colors[i]};"></span>
+
+          <span
+            class="legend-dot"
+            style="background:${colors[i]};"
+          ></span>
+
           ${label.charAt(0).toUpperCase() + label.slice(1)}
+
         </div>
-        <span class="legend-count">${counts[i]} <span style="color:var(--text-muted);font-weight:400;">(${pct}%)</span></span>
+
+        <span class="legend-count">
+
+          ${counts[i]}
+
+          <span
+            style="
+              color:var(--text-muted);
+              font-weight:400;
+            "
+          >
+            (${pct}%)
+          </span>
+
+        </span>
+
       </div>
     `;
   });
 
-  // ---- Stat Card Calculations ----
+  // ===== STATS =====
   const allLogs = {{ logs | tojson if logs else '[]' }};
-  if (allLogs.length) {
-    const highConf = allLogs.filter(l => l[3] >= 75).length;
-    const lowConf  = allLogs.filter(l => l[3] < 50).length;
-    document.getElementById('highConfCount').textContent = highConf;
-    document.getElementById('highConfPct').textContent = `${Math.round(highConf / allLogs.length * 100)}% of scans`;
-    document.getElementById('lowConfCount').textContent = lowConf;
 
-    // Most common category
+  if(allLogs.length){
+
+    const highConf =
+      allLogs.filter(l => l[3] >= 75).length;
+
+    const lowConf =
+      allLogs.filter(l => l[3] < 50).length;
+
+    document.getElementById('highConfCount')
+      .textContent = highConf;
+
+    document.getElementById('lowConfCount')
+      .textContent = lowConf;
+
+    document.getElementById('highConfPct')
+      .textContent =
+      `${Math.round(highConf/allLogs.length*100)}% of scans`;
+
     const catCounts = {};
-    allLogs.forEach(l => { catCounts[l[2]] = (catCounts[l[2]] || 0) + 1; });
-    const topCat = Object.entries(catCounts).sort((a,b) => b[1]-a[1])[0];
-    if (topCat) {
-      document.getElementById('topCat').textContent = topCat[0].charAt(0).toUpperCase() + topCat[0].slice(1);
+
+    allLogs.forEach(l => {
+      catCounts[l[2]] =
+        (catCounts[l[2]] || 0) + 1;
+    });
+
+    document.getElementById('generalCount')
+      .textContent =
+      `${catCounts['general'] || 0} scans`;
+
+    document.getElementById('infectiousCount')
+      .textContent =
+      `${catCounts['infectious'] || 0} scans`;
+
+    document.getElementById('pharmaceuticalCount')
+      .textContent =
+      `${catCounts['pharmaceutical'] || 0} scans`;
+
+    document.getElementById('sharpsCount')
+      .textContent =
+      `${catCounts['sharps'] || 0} scans`;
+
+    const topCat =
+      Object.entries(catCounts)
+      .sort((a,b)=>b[1]-a[1])[0];
+
+    if(topCat){
+      document.getElementById('topCat')
+        .textContent =
+        topCat[0].charAt(0).toUpperCase() +
+        topCat[0].slice(1);
     }
   }
 
-  // ---- Table Search ----
-  function filterTable(q) {
-    const rows = document.querySelectorAll('#dataTable tbody tr');
-    const query = q.toLowerCase();
+  // ===== SEARCH FILTER =====
+  function applyFilters(){
+
+    const search =
+      document.getElementById('tableSearch')
+      .value.toLowerCase();
+
+    const category =
+      document.getElementById('categoryFilter')
+      .value;
+
+    const rows =
+      document.querySelectorAll('#dataTable tbody tr');
+
     rows.forEach(row => {
-      row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+
+      const text =
+        row.textContent.toLowerCase();
+
+      const badge =
+        row.querySelector('.table-badge');
+
+      let rowCategory = '';
+
+      if(badge){
+        rowCategory =
+          badge.textContent.toLowerCase().trim();
+      }
+
+      const matchesSearch =
+        text.includes(search);
+
+      const matchesCategory =
+        category === 'all' ||
+        rowCategory === category;
+
+      row.style.display =
+        matchesSearch && matchesCategory
+        ? ''
+        : 'none';
     });
   }
 
-  // ---- Modal ----
-  function openModal(src, category, conf) {
+  function quickFilter(category){
+
+    document.getElementById('categoryFilter').value =
+      category;
+
+    applyFilters();
+  }
+
+  // ===== MODAL =====
+  function openModal(src, category, conf){
+
     document.getElementById('modalImg').src = src;
-    const badge = document.getElementById('modalBadge');
-    const cat = (category || '').toLowerCase().replace(' ','-');
-    badge.className = `table-badge tb-${cat}`;
-    badge.textContent = (category || '').charAt(0).toUpperCase() + (category||'').slice(1);
-    document.getElementById('modalConf').textContent = `Confidence: ${conf}%`;
-    document.getElementById('modalOverlay').classList.add('open');
+
+    const badge =
+      document.getElementById('modalBadge');
+
+    const cat =
+      category.toLowerCase();
+
+    badge.className =
+      `table-badge tb-${cat}`;
+
+    badge.textContent =
+      category.charAt(0).toUpperCase() +
+      category.slice(1);
+
+    document.getElementById('modalConf')
+      .textContent =
+      `Confidence: ${conf}%`;
+
+    document.getElementById('modalOverlay')
+      .classList.add('open');
+
     document.body.style.overflow = 'hidden';
   }
-  function closeModal(e) {
-    if (!e || e.target === document.getElementById('modalOverlay')) {
-      document.getElementById('modalOverlay').classList.remove('open');
+
+  function closeModal(e){
+
+    if(
+      !e ||
+      e.target === document.getElementById('modalOverlay')
+    ){
+      document.getElementById('modalOverlay')
+        .classList.remove('open');
+
       document.body.style.overflow = '';
     }
   }
 
-  // ---- Stagger stat cards ----
-  document.querySelectorAll('.stat-card').forEach((el, i) => {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(20px)';
-    el.style.transition = `opacity 0.5s ease ${i*0.1}s, transform 0.5s ease ${i*0.1}s`;
-    setTimeout(() => {
-      el.style.opacity = '1';
-      el.style.transform = 'translateY(0)';
-    }, 100);
-  });
+  // ===== VIEW MORE =====
+  let expanded = false;
 
-  function updateTime() {
-  const now = new Date();
-  document.getElementById('lastUpdated').textContent =
-    "📅 Last updated: " + now.toLocaleString();
-}
-let expanded = false;
+  function toggleRows(){
 
-function toggleRows() {
-  const rows = document.querySelectorAll('#dataTable tbody tr');
-  expanded = !expanded;
+    const rows =
+      document.querySelectorAll('#dataTable tbody tr');
 
-  rows.forEach((row, index) => {
-    if (index >= 5) {
-      row.style.display = expanded ? '' : 'none';
-    }
-  });
+    expanded = !expanded;
 
-  document.getElementById('viewBtn').textContent = expanded ? 'View Less' : 'View More';
-}
+    rows.forEach((row, index)=>{
 
-// Run on page load
-window.addEventListener('load', () => {
-  const rows = document.querySelectorAll('#dataTable tbody tr');
-  rows.forEach((row, index) => {
-    if (index >= 5) {
-      row.style.display = 'none';
-    }
-  });
-});
-function toggleAll(source) {
-  document.querySelectorAll('.row-check').forEach(cb => {
-    cb.checked = source.checked;
-  });
-}
+      if(index >= 5){
 
-function deleteSelected() {
-  let selected = [];
-  document.querySelectorAll('.row-check:checked').forEach(cb => {
-    selected.push(cb.value);
-  });
+        row.style.display =
+          expanded ? '' : 'none';
+      }
+    });
 
-  if (selected.length === 0) {
-    alert("No items selected");
-    return;
+    document.getElementById('viewBtn')
+      .textContent =
+      expanded ? 'View Less' : 'View More';
   }
 
-  if (!confirm("Delete selected items?")) return;
+  window.addEventListener('load', ()=>{
 
-  fetch("/delete-multiple", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ ids: selected })
-  }).then(() => {
-    location.reload();
+    const rows =
+      document.querySelectorAll('#dataTable tbody tr');
+
+    rows.forEach((row, index)=>{
+
+      if(index >= 5){
+        row.style.display = 'none';
+      }
+    });
   });
+
+  // ===== CHECKBOX =====
+  function toggleAll(source){
+
+    document
+      .querySelectorAll('.row-check')
+      .forEach(cb => {
+        cb.checked = source.checked;
+      });
+  }
+
+  // ===== DELETE =====
+  function deleteSelected(){
+
+    let selected = [];
+
+    document
+      .querySelectorAll('.row-check:checked')
+      .forEach(cb => {
+        selected.push(cb.value);
+      });
+
+    if(selected.length === 0){
+      alert("No items selected");
+      return;
+    }
+
+    if(!confirm("Delete selected items?")) return;
+
+    fetch("/delete-multiple",{
+
+      method:"POST",
+
+      headers:{
+        "Content-Type":"application/json"
+      },
+
+      body:JSON.stringify({
+        ids:selected
+      })
+
+    }).then(()=>{
+      location.reload();
+    });
+  }
+  function sendEmailReport(){
+
+  fetch("/send-dashboard-email")
+
+    .then(response => response.text())
+
+    .then(data => {
+
+      console.log(data);
+
+      const status =
+        document.getElementById("emailStatus");
+
+      status.innerHTML = "✅ Report Sent Successfully";
+
+      status.style.display = "block";
+
+      setTimeout(() => {
+
+        status.style.display = "none";
+
+      }, 4000);
+
+    })
+
+    .catch(error => {
+
+      alert("Failed to send email");
+
+      console.log(error);
+
+    });
 }
 </script>
+
 </body>
 </html>
-
