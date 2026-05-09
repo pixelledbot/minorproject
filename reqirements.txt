@@ -1,0 +1,8 @@
+flask
+torch
+torchvision
+opencv-python
+numpy
+pillow
+flask-mail
+reportlab
