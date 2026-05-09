@@ -337,7 +337,52 @@ def predict():
 
     conn.commit()
     conn.close()
+    
+        # =========================
+    # LOW CONFIDENCE ALERT
+    # =========================
 
+    if confidence < 50:
+
+        try:
+
+            alert_msg = Message(
+                subject="⚠ Low Confidence Prediction Alert",
+                recipients=["simran2315222@gmail.com"]
+            )
+
+            alert_msg.body = f"""
+SafeWaste AI detected a LOW confidence prediction.
+
+Prediction : {prediction}
+
+Confidence : {confidence}%
+
+Risk Level : {risk}
+
+Timestamp : {datetime.datetime.now()}
+
+The AI model may be uncertain about this image.
+Manual verification is recommended.
+"""
+
+            with open(filepath, "rb") as fp:
+
+                alert_msg.attach(
+                    filename,
+                    "image/jpeg",
+                    fp.read()
+                )
+
+            mail.send(alert_msg)
+
+            print("LOW CONFIDENCE EMAIL SENT")
+
+        except Exception as e:
+
+            print("LOW CONFIDENCE EMAIL ERROR")
+            print(str(e))
+            
     return render_template(
         "result.html",
         prediction=prediction,

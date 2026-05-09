@@ -310,37 +310,74 @@ let currentCropType = '';
   }
 
   function capture() {
-    if (!stream) return;
 
-    // Flash effect
-    const flash = document.getElementById('flashOverlay');
-    flash.style.opacity = '0.85';
-    setTimeout(() => flash.style.opacity = '0', 200);
+  if (!stream) return;
 
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
+  // Flash effect
+  const flash = document.getElementById('flashOverlay');
 
-    canvas.toBlob(blob => {
-      const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' });
+  flash.style.opacity = '0.85';
 
-      // Assign to file input
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      document.getElementById('fileInput').files = dt.files;
+  setTimeout(() => {
+    flash.style.opacity = '0';
+  }, 200);
 
-      // Show capture preview
-      const url = canvas.toDataURL('image/jpeg');
-      document.getElementById('capturedImg').src = url;
-      document.getElementById('capturePreview').style.display = 'block';
+  const canvas = document.createElement('canvas');
 
-      // Hide file preview if any
-      clearFile();
-      updateReadyStatus('camera');
-    }, 'image/jpeg', 0.92);
-  }
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
 
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(video, 0, 0);
+
+  canvas.toBlob(blob => {
+
+    const file = new File(
+      [blob],
+      'capture.jpg',
+      { type: 'image/jpeg' }
+    );
+
+    // =========================
+    // PUT IMAGE INTO INPUT
+    // =========================
+
+    const dt = new DataTransfer();
+
+    dt.items.add(file);
+
+    document.getElementById('fileInput').files =
+      dt.files;
+
+    // =========================
+    // SHOW PREVIEW
+    // =========================
+
+    const imageURL =
+      URL.createObjectURL(blob);
+
+    document.getElementById('capturedImg').src =
+      imageURL;
+
+    document.getElementById('capturePreview')
+      .style.display = 'block';
+
+    // =========================
+    // HIDE ONLY UPLOAD UI
+    // DO NOT CLEAR INPUT
+    // =========================
+
+    document.getElementById('filePreview')
+      .style.display = 'none';
+
+    document.getElementById('dropZone')
+      .style.display = 'block';
+
+    updateReadyStatus('camera');
+
+  }, 'image/jpeg', 0.95);
+}
   function clearCapturePreview() {
     document.getElementById('capturePreview').style.display = 'none';
   }

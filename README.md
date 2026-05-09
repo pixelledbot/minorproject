@@ -1,375 +1,397 @@
-# SafeWaste AI - Hospital Waste Classification System
+# SafeWaste AI – Hospital Waste Classification System
 
-## 📋 Overview
+## 📌 Overview
 
-**SafeWaste AI** is an AI-powered system for real-time classification of hospital biomedical waste using deep learning. The system uses ResNet-18 trained on medical waste images to classify waste into 4 categories: General, Infectious, Pharmaceutical, and Sharps.
+SafeWaste AI is an AI-powered hospital biomedical waste classification system developed using Flask, PyTorch, and Deep Learning.  
+The system classifies hospital waste images into different biomedical categories and provides disposal instructions instantly.
 
-### Key Features
-- ✅ **AI-Powered Classification**: 95%+ accuracy on validation dataset
-- ✅ **Real-time Processing**: <2s classification time per image
-- ✅ **Visual Analytics**: Grad-CAM heatmaps showing model decision reasoning
-- ✅ **Dashboard**: Comprehensive statistics and history tracking
-- ✅ **Compliance Ready**: WHO-compliant disposal guidelines
-- ✅ **Mobile Responsive**: Works on desktop, tablet, and mobile
-- ✅ **Export Reports**: CSV and PDF export functionality
+The project uses a fine-tuned ResNet-18 deep learning model trained on biomedical waste images and includes Grad-CAM heatmap visualization for explainable AI predictions.
 
 ---
 
-## 🏗️ Architecture
+# 🚀 Features
 
-### System Components
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Frontend (Flask Templates)               │
-│  home.html | upload.html | result.html | dashboard.html    │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-┌──────────────────────┴──────────────────────────────────────┐
-│                  Backend API (Flask)                        │
-│  • /predict → ML prediction pipeline                        │
-│  • /dashboard → Analytics & statistics                      │
-│  • /export → CSV/PDF reports                               │
-│  • /metrics → Model performance metrics                    │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-┌──────────────────────┴──────────────────────────────────────┐
-│              Machine Learning Pipeline                      │
-│  • Image preprocessing (224x224 normalization)             │
-│  • ResNet-18 model inference                               │
-│  • Grad-CAM visualization                                  │
-│  • Confidence scoring                                      │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-┌──────────────────────┴──────────────────────────────────────┐
-│              Data Storage Layer                             │
-│  • SQLite: predictions, feedback, history                  │
-│  • File System: uploaded images, heatmaps                  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Waste Classification Categories
-
-| Category | Color | Risk Level | Disposal |
-|----------|-------|-----------|----------|
-| **General** | Black | 🟢 Low | Standard waste bins |
-| **Infectious** | Yellow | 🔴 High | Biomedical bags + incineration |
-| **Pharmaceutical** | Red | 🟡 Medium | Pharma containers + special handling |
-| **Sharps** | Red | 🔴 Critical | Puncture-proof containers |
+- ✅ AI-powered biomedical waste classification
+- ✅ Real-time image prediction
+- ✅ Upload image from device
+- ✅ Live camera capture support
+- ✅ Image cropping before prediction
+- ✅ Grad-CAM heatmap visualization
+- ✅ Prediction confidence score
+- ✅ Automatic disposal instructions
+- ✅ Dashboard analytics
+- ✅ SQLite database integration
+- ✅ PDF report export with images
+- ✅ Email report generation
+- ✅ Automatic low-confidence email alerts
+- ✅ Feedback correction system
+- ✅ Responsive modern UI
 
 ---
 
-## 🚀 Getting Started
+# 🧠 Waste Categories
 
-### Prerequisites
-- Python 3.8+
-- PyTorch 1.9+
-- 2GB RAM minimum
-- Webcam (optional, for live capture)
+| Category | Risk Level | Disposal Method |
+|----------|-------------|----------------|
+| General | Low | Black Bin |
+| Infectious | High | Yellow Bin |
+| Pharmaceutical | Medium | Blue Bin |
+| Sharps | Critical | White Container |
 
-### Installation
+---
 
-1. **Clone repository**
+# 🏗️ Technologies Used
+
+## Frontend
+- HTML
+- CSS
+- JavaScript
+- Cropper.js
+
+## Backend
+- Flask
+- SQLite
+- Flask-Mail
+
+## AI / Deep Learning
+- PyTorch
+- TorchVision
+- ResNet-18
+- Grad-CAM
+- OpenCV
+
+## Report Generation
+- ReportLab PDF
+
+---
+
+# 📂 Project Structure
+
+```bash
+SafeWaste-AI/
+│
+├── app.py
+├── training.py
+├── database.db
+├── classes.pth
+├── waste_classifier_best.pth
+├── requirements.txt
+│
+├── templates/
+│   ├── home.html
+│   ├── upload.html
+│   ├── result.html
+│   ├── dashboard.html
+│   ├── who.html
+│   ├── biomedical.html
+│   ├── privacy.html
+│   └── terms.html
+│
+├── static/
+│   ├── style.css
+│   ├── logo.png
+│   └── uploads/
+│
+├── dataset_split/
+│   ├── train/
+│   ├── val/
+│   └── test/
+│
+└── README.md
+```
+
+---
+
+# ⚙️ How the System Works
+
+## Step 1 — Upload or Capture Image
+User uploads an image or captures waste using live camera.
+
+## Step 2 — Image Preprocessing
+The image is resized to:
+
+```python
+224 × 224
+```
+
+and normalized using ImageNet normalization.
+
+## Step 3 — AI Prediction
+The ResNet-18 model predicts the waste category.
+
+## Step 4 — Confidence Calculation
+Softmax probabilities are used to calculate prediction confidence.
+
+## Step 5 — Grad-CAM Heatmap
+A heatmap is generated showing which image regions influenced the prediction.
+
+## Step 6 — Database Storage
+Prediction history is stored in SQLite database.
+
+## Step 7 — PDF & Email Reports
+Reports are generated with:
+- prediction data
+- confidence
+- timestamps
+- actual waste images
+
+---
+
+# 🧠 Deep Learning Model
+
+## Model Architecture
+
+- Base Model: ResNet-18
+- Framework: PyTorch
+- Transfer Learning: Enabled
+- Fine-Tuning: Layer3 + Layer4 + FC Layer
+
+---
+
+# 🏋️ Model Training
+
+## Training Techniques Used
+
+- Transfer Learning
+- Data Augmentation
+- Label Smoothing
+- AdamW Optimizer
+- Cosine Annealing Scheduler
+
+---
+
+# 📊 Image Augmentations
+
+```python
+RandomHorizontalFlip
+RandomRotation
+ColorJitter
+Resize
+Normalization
+```
+
+---
+
+# 📈 Training Details
+
+| Parameter | Value |
+|-----------|------|
+| Epochs | 8 |
+| Batch Size | 16 |
+| Optimizer | AdamW |
+| Learning Rate | 0.0003 |
+| Loss Function | CrossEntropyLoss |
+| Scheduler | CosineAnnealingLR |
+
+---
+
+# 🔥 Explainable AI (Grad-CAM)
+
+The system generates Grad-CAM heatmaps to visualize:
+- model attention areas
+- important image regions
+- prediction reasoning
+
+This improves transparency and trust in AI predictions.
+
+---
+
+# 📧 Email System
+
+The project includes automatic email functionality.
+
+## Features
+
+- Send dashboard PDF reports via email
+- Attach generated PDF automatically
+- Send low-confidence prediction alerts
+- Attach suspicious waste image in alert mail
+
+---
+
+# 📄 PDF Report Features
+
+Generated reports include:
+
+- Total predictions
+- Average confidence
+- Waste category counts
+- Full prediction history
+- Waste images
+- Prediction confidence
+- Timestamps
+
+---
+
+# 🗃️ Database
+
+SQLite database stores:
+
+## History Table
+- filename
+- prediction
+- confidence
+- timestamp
+
+## Feedback Table
+- corrected labels
+- prediction corrections
+- confidence
+- timestamps
+
+---
+
+# 📊 Dashboard Features
+
+- Total scans
+- Prediction history
+- Waste category statistics
+- Last updated timestamp
+- Multi-delete records
+- Report export
+
+---
+
+# 📸 Camera Features
+
+- Live camera capture
+- Real-time preview
+- Crop captured image
+- Mobile camera support
+- Webcam support
+
+---
+
+# 🔐 Security Features
+
+- File validation
+- Secure image handling
+- Database protection
+- Controlled uploads
+- Error handling
+
+---
+
+# 🚀 Installation
+
+## Step 1 — Clone Project
+
 ```bash
 git clone https://github.com/yourusername/safewaste-ai.git
 cd safewaste-ai
 ```
 
-2. **Create virtual environment**
+---
+
+## Step 2 — Create Virtual Environment
+
+### Windows
+
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+venv\Scripts\activate
 ```
 
-3. **Install dependencies**
+### Linux / Mac
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+---
+
+## Step 3 — Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **Download pre-trained model**
-- Place `waste_classifier_best.pth` in project root
-- Place `classes.pth` in project root
+---
 
-5. **Run application**
+## Step 4 — Add Model Files
+
+Place these files in root directory:
+
+```bash
+classes.pth
+waste_classifier_best.pth
+```
+
+---
+
+## Step 5 — Run Application
+
 ```bash
 python app.py
 ```
 
-Access at: `http://localhost:5000`
-
 ---
 
-## 📊 Model Details
+# 🌐 Access Application
 
-### Architecture
-- **Base Model**: ResNet-18 (pre-trained on ImageNet)
-- **Input Size**: 224×224 pixels
-- **Output Classes**: 4 (General, Infectious, Pharmaceutical, Sharps)
-- **Framework**: PyTorch
-
-### Training Data
-- **Total Images**: 2,000+
-- **Train/Val/Test Split**: 70% / 15% / 15%
-- **Augmentation**: Rotation, flipping, color jittering
-
-### Performance Metrics
-```
-Overall Accuracy: 95.2%
-
-Per-Class Metrics:
-┌────────────────┬───────────┬────────┬─────────┐
-│ Category       │ Precision │ Recall │ F1      │
-├────────────────┼───────────┼────────┼─────────┤
-│ General        │ 96%       │ 94%    │ 95%     │
-│ Infectious     │ 94%       │ 96%    │ 95%     │
-│ Pharmaceutical │ 93%       │ 92%    │ 92.5%   │
-│ Sharps         │ 97%       │ 96%    │ 96.5%   │
-└────────────────┴───────────┴────────┴─────────┘
-```
-
----
-
-## 📱 API Endpoints
-
-### Prediction
-```
-POST /predict
-Content-Type: multipart/form-data
-
-Parameters:
-  - image: File (JPG, PNG, BMP)
-  
-Response:
-{
-  "prediction": "infectious",
-  "confidence": 0.87,
-  "instruction": "Dispose in yellow biomedical bags...",
-  "processing_time": 1.2
-}
-```
-
-### Dashboard Statistics
-```
-GET /dashboard
-
-Response:
-{
-  "total_scans": 342,
-  "accuracy": 95.2,
-  "predictions": [
-    {"date": "2026-05-09", "category": "infectious", "confidence": 0.92}
-  ]
-}
-```
-
-### Model Metrics
-```
-GET /metrics
-
-Response:
-{
-  "accuracy": 95.2,
-  "precision": {"general": 0.96, "infectious": 0.94, ...},
-  "recall": {"general": 0.94, "infectious": 0.96, ...},
-  "f1_score": {"general": 0.95, ...}
-}
-```
-
-### Export Report
-```
-GET /export?format=csv
-GET /export?format=pdf
-
-Returns: CSV/PDF file with prediction history
-```
-
----
-
-## 🗂️ Project Structure
-
-```
-safewaste-ai/
-├── app.py                    # Main Flask application
-├── classes.pth              # Class labels
-├── waste_classifier_best.pth # Pre-trained model
-├── database.db              # SQLite database
-├── requirements.txt         # Python dependencies
-├── README.md                # This file
-├── Dockerfile              # Docker container setup
-├── .env.example            # Environment variables template
-├── .gitignore              # Git ignore rules
-│
-├── templates/              # HTML templates
-│   ├── home.html          # Landing page
-│   ├── upload.html        # Upload interface
-│   ├── result.html        # Prediction result page
-│   ├── dashboard.html     # Analytics dashboard
-│   ├── who.html           # WHO guidelines
-│   ├── biomedical.html    # Biomedical rules
-│   ├── privacy.html       # Privacy policy
-│   └── terms.html         # Terms of use
-│
-├── static/                # Static files
-│   ├── style.css          # Global stylesheet
-│   ├── script.js          # Frontend JavaScript
-│   ├── logo.png           # Logo
-│   ├── uploads/           # User uploaded images
-│   └── heatmaps/          # Generated heatmaps
-│
-├── dataset_raw/           # Original dataset
-├── dataset_clean/         # Cleaned dataset
-├── dataset_split/         # Train/Val/Test split
-│   ├── train/
-│   ├── val/
-│   └── test/
-│
-├── logs/                  # Application logs
-│   └── predictions.log    # All prediction logs
-│
-└── tests/                 # Unit tests
-    ├── test_prediction.py
-    ├── test_database.py
-    └── test_utils.py
-```
-
----
-
-## 🎯 Usage Examples
-
-### Web Interface
-1. Navigate to `http://localhost:5000`
-2. Click **"Start Scanning"**
-3. Upload image or capture with webcam
-4. View prediction result with confidence score
-5. Access **Dashboard** for history and statistics
-
-### Programmatic Use
-```python
-import requests
-
-# Upload image for prediction
-files = {'image': open('waste_sample.jpg', 'rb')}
-response = requests.post('http://localhost:5000/predict', files=files)
-result = response.json()
-
-print(f"Category: {result['prediction']}")
-print(f"Confidence: {result['confidence']:.2%}")
-print(f"Processing Time: {result['processing_time']:.2f}s")
-```
-
----
-
-## 🔐 Security Features
-
-- ✅ Input validation (file type, size limits)
-- ✅ Secure file handling
-- ✅ SQL injection prevention
-- ✅ CSRF protection ready
-- ✅ Rate limiting (production)
-- ✅ Error logging without sensitive data
-
----
-
-## 🐳 Docker Deployment
+Open browser:
 
 ```bash
-# Build Docker image
-docker build -t safewaste-ai .
-
-# Run container
-docker run -p 5000:5000 safewaste-ai
-
-# Access at http://localhost:5000
+http://127.0.0.1:5000
 ```
 
 ---
 
-## 📈 Performance Optimization
+# 🏋️ Train Model
 
-| Optimization | Impact | Status |
-|-------------|--------|--------|
-| Model caching | 40% faster | ✅ Implemented |
-| Database indexing | 60% query speedup | ✅ Implemented |
-| Image compression | 30% smaller uploads | ✅ Implemented |
-| Batch processing | 5x faster multi-image | ✅ Implemented |
+Run:
 
----
-
-## 🧪 Testing
-
-Run unit tests:
 ```bash
-pytest tests/ -v
+python training.py
 ```
 
-Test coverage:
+The trained model will be saved as:
+
 ```bash
-pytest --cov=.
+waste_classifier_best.pth
 ```
 
 ---
 
-## 🚢 Deployment Checklist
+# 📋 Requirements
 
-- [ ] Environment variables configured (.env)
-- [ ] Database migrated to production
-- [ ] Model weights verified
-- [ ] SSL certificate installed
-- [ ] Rate limiting enabled
-- [ ] Logging enabled
-- [ ] Backups configured
-- [ ] Monitoring set up
-
----
-
-## 👨‍💻 Development
-
-### Adding New Features
-1. Create feature branch: `git checkout -b feature/new-feature`
-2. Make changes and test locally
-3. Run tests: `pytest tests/`
-4. Commit: `git commit -m "Add new feature"`
-5. Push: `git push origin feature/new-feature`
-6. Create Pull Request
-
-### Code Style
-- PEP 8 compliant
-- Type hints recommended
-- Docstrings for functions
+```txt
+flask
+torch
+torchvision
+opencv-python
+numpy
+pillow
+flask-mail
+reportlab
+```
 
 ---
 
-## 📞 Support & Contact
+# 🎯 Future Improvements
 
-- **Issues**: Report bugs on GitHub Issues
-- **Email**: support@safewaste-ai.example.com
-- **Documentation**: Full docs available in `/docs`
-
----
-
-## 📜 License
-
-MIT License - See LICENSE file for details
+- Multi-waste detection
+- Real-time CCTV integration
+- Voice assistant support
+- Cloud deployment
+- Mobile application
+- IoT smart bin integration
 
 ---
 
-## 🙏 Acknowledgments
+# 👩‍💻 Developers
 
-- ResNet-18 architecture from TorchVision
-- WHO Medical Waste Guidelines
-- Hospital waste classification standards
+Developed by Simran Kaur, Simran Kaur and Harjot Kaur
 
 ---
 
-## 📚 Research & References
+# 📜 License
 
-1. He et al. (2015) - "Deep Residual Learning for Image Recognition"
-2. Selvaraju et al. (2017) - "Grad-CAM: Why did you say that?"
-3. WHO (2011) - "Safe Management of Wastes from Health-Care Activities"
+This project is developed for educational and research purposes.
 
 ---
 
-**Last Updated**: May 9, 2026 | **Version**: 1.0 | **Status**: Production Ready ✅
+# 🏥 SafeWaste AI
 
-
-report sent to email should be same as exported one + my system should send mail too when the confidence is low than 50 + remove login completely + the pdfs should contain images instead of their names. everything else should work the same
+AI for safer biomedical waste management.
