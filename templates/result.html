@@ -13,9 +13,8 @@
 <nav class="navbar" id="navbar">
   <a href="/" class="nav-logo">
     <div class="logo-icon">
-      <img src="logo.png" alt="SafeWaste AI Logo">
-      <img src="/static/logo.png" alt="SafeWaste AI Logo">
-    </div>
+  <img src="/static/logo.png" alt="SafeWaste AI Logo">
+</div>
     SafeWaste <span class="accent">AI</span>
   </a>
 
@@ -105,16 +104,162 @@
           </div>
 
           <div class="confidence-track">
-            <div class="confidence-fill" style="width: {{ conf }}%;"></div>
+            <div class="confidence-fill" id="confidenceFill"></div>
           </div>
         </div>
+
+        <script>
+          document.getElementById('confidenceFill').style.width = '{{ conf }}%';
+        </script>
 
         <!-- INSTRUCTION -->
         <div class="instruction-box">
           <h4>Disposal Instruction</h4>
           <p>{{ instruction }}</p>
         </div>
+        <!-- ===== DISPOSAL GUIDELINES ===== -->
 
+<div class="instruction-box" style="margin-top:22px;">
+
+  <h4 style="margin-bottom:14px;">
+    🏥 Disposal Guidelines
+  </h4>
+
+  {% set cat = prediction.lower() %}
+
+  <!-- ===== GENERAL ===== -->
+  {% if cat == "general" %}
+
+  <ul class="guide-list">
+
+    <li>
+      Dispose in <strong>black general waste bins</strong>.
+    </li>
+
+    <li>
+      Ensure waste is non-infectious and non-sharp.
+    </li>
+
+    <li>
+      Use sealed bags before disposal.
+    </li>
+
+    <li>
+      Keep separated from biomedical waste.
+    </li>
+
+    <li>
+      Follow hospital sanitation procedures.
+    </li>
+
+  </ul>
+
+  <div class="guide-alert safe">
+    ✅ Low-risk waste category.
+  </div>
+
+  {% endif %}
+
+  <!-- ===== INFECTIOUS ===== -->
+  {% if cat == "infectious" %}
+
+  <ul class="guide-list">
+
+    <li>
+      Dispose in <strong>yellow biomedical bags</strong>.
+    </li>
+
+    <li>
+      Wear gloves, mask, and PPE kit.
+    </li>
+
+    <li>
+      Avoid direct exposure to contaminated material.
+    </li>
+
+    <li>
+      Store separately from regular waste.
+    </li>
+
+    <li>
+      Requires sterilization or incineration.
+    </li>
+
+  </ul>
+
+  <div class="guide-alert danger">
+    ⚠ High infection and contamination risk.
+  </div>
+
+  {% endif %}
+
+  <!-- ===== PHARMACEUTICAL ===== -->
+  {% if cat == "pharmaceutical" %}
+
+  <ul class="guide-list">
+
+    <li>
+      Dispose expired medicines in pharma containers.
+    </li>
+
+    <li>
+      Never throw medicines into drains or sinks.
+    </li>
+
+    <li>
+      Cytotoxic drugs need special disposal handling.
+    </li>
+
+    <li>
+      Keep medicines sealed if possible.
+    </li>
+
+    <li>
+      Follow biomedical waste management rules.
+    </li>
+
+  </ul>
+
+  <div class="guide-alert warning">
+    ⚠ Chemical and environmental hazard possible.
+  </div>
+
+  {% endif %}
+
+  <!-- ===== SHARPS ===== -->
+  {% if cat == "sharps" %}
+
+  <ul class="guide-list">
+
+    <li>
+      Dispose immediately in puncture-proof containers.
+    </li>
+
+    <li>
+      Never recap used needles manually.
+    </li>
+
+    <li>
+      Handle syringes and blades carefully.
+    </li>
+
+    <li>
+      Wear gloves during handling.
+    </li>
+
+    <li>
+      Prevent needle-stick injuries strictly.
+    </li>
+
+  </ul>
+
+  <div class="guide-alert danger">
+    ⚠ Extremely hazardous biomedical waste.
+  </div>
+
+  {% endif %}
+
+</div>
         <!-- LOW CONFIDENCE -->
         {% if confidence and confidence < 50 %}
         <div class="warning-box">

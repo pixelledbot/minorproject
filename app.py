@@ -257,10 +257,10 @@ def predict():
         risk = "Low"
 
     instructions = {
-        "general": "Dispose in green bin.",
-        "infectious": "Dispose in yellow biohazard bag.",
-        "pharmaceutical": "Dispose in blue chemical bin.",
-        "sharps": "Dispose in puncture-proof container."
+        "general": "Dispose in BLACK bin.",
+        "infectious": "Dispose in YELLOW bin.",
+        "pharmaceutical": "Dispose in BLUE bin.",
+        "sharps": "Dispose in WHITE bin."
     }
 
     instruction = instructions.get(
@@ -581,6 +581,26 @@ def feedback():
     conn.close()
 
     return redirect("/dashboard")
+
+# =========================
+# INFO PAGES
+# =========================
+
+@app.route("/who")
+def who():
+    return render_template("who.html")
+
+@app.route("/biomedical")
+def biomedical():
+    return render_template("biomedical.html")
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
 
 # =========================
 # RUN

@@ -192,7 +192,7 @@
     }
 
     .tb-sharps{
-      background:#fee2e2;
+      background:#ffffff;
       color:#991b1b;
     }
 
@@ -237,6 +237,23 @@
       color:white;
       cursor:pointer;
       font-size:1rem;
+    }
+
+    .sortable{
+      cursor:pointer;
+      user-select:none;
+      transition:0.2s;
+      white-space:nowrap;
+    }
+
+    .sortable:hover{
+      color:#22c55e;
+    }
+
+    .sort-arrow{
+      font-size:0.72rem;
+      margin-left:6px;
+      opacity:0.7;
     }
 
     @media(max-width:1000px){
@@ -357,7 +374,7 @@
           <div class="stat-value" id="lowConfCount">—</div>
 
           <div class="stat-label">
-            Low Confidence (<70%)
+            Low Confidence (&lt;50%)
           </div>
 
           <div class="stat-change neutral">
@@ -447,32 +464,33 @@
           </a>
 
           <button
-  onclick="sendEmailReport()"
-  class="btn btn-outline btn-sm"
-  style="
-    width:100%;
-    justify-content:center;
-  "
->
-  📧 Send Report to Email
-</button>
+            onclick="sendEmailReport()"
+            class="btn btn-outline btn-sm"
+            style="
+              width:100%;
+              justify-content:center;
+            "
+          >
+            📧 Send Report to Email
+          </button>
 
-<div
-  id="emailStatus"
-  style="
-    display:none;
-    background:#dcfce7;
-    color:#166534;
-    border:1px solid #86efac;
-    padding:10px;
-    border-radius:10px;
-    font-size:0.82rem;
-    text-align:center;
-    font-weight:600;
-  "
->
-  ✅ Report Sent Successfully
-</div>
+          <div
+            id="emailStatus"
+            style="
+              display:none;
+              background:#dcfce7;
+              color:#166534;
+              border:1px solid #86efac;
+              padding:10px;
+              border-radius:10px;
+              font-size:0.82rem;
+              text-align:center;
+              font-weight:600;
+            "
+          >
+            ✅ Report Sent Successfully
+          </div>
+
         </div>
 
       </div>
@@ -494,18 +512,6 @@
               oninput="applyFilters()"
             >
 
-            <select
-              id="categoryFilter"
-              class="table-search"
-              onchange="applyFilters()"
-            >
-              <option value="all">All Categories</option>
-              <option value="general">General</option>
-              <option value="infectious">Infectious</option>
-              <option value="pharmaceutical">Pharmaceutical</option>
-              <option value="sharps">Sharps</option>
-            </select>
-
           </div>
 
         </div>
@@ -522,11 +528,91 @@
                 </th>
 
                 <th>Image</th>
-                <th>Filename</th>
-                <th>Category</th>
-                <th>Confidence</th>
-                <th>Timestamp</th>
 
+              <th>
+
+  <select
+    class="table-search"
+    onchange="handleSort(this.value)"
+    style="
+      padding:6px 10px;
+      font-size:0.78rem;
+      min-width:120px;
+    "
+  >
+    <option value="">Filename ▾</option>
+    <option value="filename-asc">A → Z</option>
+    <option value="filename-desc">Z → A</option>
+  </select>
+
+</th>
+
+<th>
+
+  <select
+    class="table-search"
+    onchange="handleSort(this.value)"
+    style="
+      padding:6px 10px;
+      font-size:0.78rem;
+      min-width:120px;
+    "
+  >
+    <option value="">Category ▾</option>
+
+<option value="general">
+  General
+</option>
+
+<option value="infectious">
+  Infectious
+</option>
+
+<option value="pharmaceutical">
+  Pharmaceutical
+</option>
+
+<option value="sharps">
+  Sharps
+</option>
+
+</th>
+
+<th>
+
+  <select
+    class="table-search"
+    onchange="handleSort(this.value)"
+    style="
+      padding:6px 10px;
+      font-size:0.78rem;
+      min-width:140px;
+    "
+  >
+    <option value="">Confidence ▾</option>
+    <option value="confidence-high">High → Low</option>
+    <option value="confidence-low">Low → High</option>
+  </select>
+
+</th>
+
+<th>
+
+  <select
+    class="table-search"
+    onchange="handleSort(this.value)"
+    style="
+      padding:6px 10px;
+      font-size:0.78rem;
+      min-width:140px;
+    "
+  >
+    <option value="">Timestamp ▾</option>
+    <option value="time-new">Newest First</option>
+    <option value="time-old">Oldest First</option>
+  </select>
+
+</th>
               </tr>
             </thead>
 
@@ -553,6 +639,7 @@
                 </td>
 
                 <td
+                  class="filename-cell"
                   style="
                     max-width:120px;
                     overflow:hidden;
@@ -566,13 +653,13 @@
                   {{ log[1] }}
                 </td>
 
-                <td>
+                <td class="category-cell">
                   <span class="table-badge tb-{{ log[2] | lower }}">
                     {{ log[2] | capitalize }}
                   </span>
                 </td>
 
-                <td>
+                <td class="confidence-cell">
 
                   <div class="confidence-mini">
 
@@ -592,6 +679,7 @@
                 </td>
 
                 <td
+                  class="timestamp-cell"
                   style="
                     font-size:0.82rem;
                     color:var(--text-muted);
@@ -806,7 +894,7 @@
   if(allLogs.length){
 
     const highConf =
-      allLogs.filter(l => l[3] >= 75).length;
+      allLogs.filter(l => l[3] >= 70).length;
 
     const lowConf =
       allLogs.filter(l => l[3] < 50).length;
@@ -863,10 +951,6 @@
       document.getElementById('tableSearch')
       .value.toLowerCase();
 
-    const category =
-      document.getElementById('categoryFilter')
-      .value;
-
     const rows =
       document.querySelectorAll('#dataTable tbody tr');
 
@@ -875,36 +959,32 @@
       const text =
         row.textContent.toLowerCase();
 
-      const badge =
-        row.querySelector('.table-badge');
-
-      let rowCategory = '';
-
-      if(badge){
-        rowCategory =
-          badge.textContent.toLowerCase().trim();
-      }
-
-      const matchesSearch =
-        text.includes(search);
-
-      const matchesCategory =
-        category === 'all' ||
-        rowCategory === category;
-
       row.style.display =
-        matchesSearch && matchesCategory
+        text.includes(search)
         ? ''
         : 'none';
     });
   }
 
+  // ===== QUICK FILTER =====
   function quickFilter(category){
 
-    document.getElementById('categoryFilter').value =
-      category;
+    const rows =
+      document.querySelectorAll('#dataTable tbody tr');
 
-    applyFilters();
+    rows.forEach(row => {
+
+      const badge =
+        row.querySelector('.table-badge');
+
+      const rowCategory =
+        badge.textContent.toLowerCase().trim();
+
+      row.style.display =
+        rowCategory === category
+        ? ''
+        : 'none';
+    });
   }
 
   // ===== MODAL =====
@@ -985,6 +1065,138 @@
     });
   });
 
+  // ===== SORTING =====
+function handleSort(type){
+
+  const tbody =
+    document.querySelector('#dataTable tbody');
+
+  const rows =
+    Array.from(tbody.querySelectorAll('tr'));
+
+  // ===== CATEGORY FILTER =====
+  if(
+    type === 'general' ||
+    type === 'infectious' ||
+    type === 'pharmaceutical' ||
+    type === 'sharps'
+  ){
+
+    rows.forEach(row => {
+
+      const category =
+        row.querySelector('.category-cell')
+        .textContent
+        .trim()
+        .toLowerCase();
+
+      row.style.display =
+        category === type
+        ? ''
+        : 'none';
+    });
+
+    return;
+  }
+
+
+  // ===== RESET DISPLAY =====
+  rows.forEach(row => {
+    row.style.display = '';
+  });
+
+  rows.sort((a,b)=>{
+
+    // ===== FILENAME =====
+    if(type === 'filename-asc'){
+
+      return a.querySelector('.filename-cell')
+      .textContent.trim().toLowerCase()
+
+      .localeCompare(
+
+        b.querySelector('.filename-cell')
+        .textContent.trim().toLowerCase()
+      );
+    }
+
+    if(type === 'filename-desc'){
+
+      return b.querySelector('.filename-cell')
+      .textContent.trim().toLowerCase()
+
+      .localeCompare(
+
+        a.querySelector('.filename-cell')
+        .textContent.trim().toLowerCase()
+      );
+    }
+
+    // ===== CONFIDENCE =====
+    if(type === 'confidence-high'){
+
+      return parseFloat(
+
+        b.querySelector('.confidence-cell span')
+        .textContent.replace('%','')
+
+      ) - parseFloat(
+
+        a.querySelector('.confidence-cell span')
+        .textContent.replace('%','')
+      );
+    }
+
+    if(type === 'confidence-low'){
+
+      return parseFloat(
+
+        a.querySelector('.confidence-cell span')
+        .textContent.replace('%','')
+
+      ) - parseFloat(
+
+        b.querySelector('.confidence-cell span')
+        .textContent.replace('%','')
+      );
+    }
+
+    // ===== TIMESTAMP =====
+    if(type === 'time-new'){
+
+      return new Date(
+
+        b.querySelector('.timestamp-cell')
+        .textContent.trim()
+
+      ) - new Date(
+
+        a.querySelector('.timestamp-cell')
+        .textContent.trim()
+      );
+    }
+
+    if(type === 'time-old'){
+
+      return new Date(
+
+        a.querySelector('.timestamp-cell')
+        .textContent.trim()
+
+      ) - new Date(
+
+        b.querySelector('.timestamp-cell')
+        .textContent.trim()
+      );
+    }
+
+  });
+
+  tbody.innerHTML = '';
+
+  rows.forEach(row => tbody.appendChild(row));
+}
+
   // ===== CHECKBOX =====
   function toggleAll(source){
 
@@ -1029,39 +1241,42 @@
       location.reload();
     });
   }
+
+  // ===== EMAIL =====
   function sendEmailReport(){
 
-  fetch("/send-dashboard-email")
+    fetch("/send-dashboard-email")
 
-    .then(response => response.text())
+      .then(response => response.text())
 
-    .then(data => {
+      .then(data => {
 
-      console.log(data);
+        console.log(data);
 
-      const status =
-        document.getElementById("emailStatus");
+        const status =
+          document.getElementById("emailStatus");
 
-      status.innerHTML = "✅ Report Sent Successfully";
+        status.innerHTML = "✅ Report Sent Successfully";
 
-      status.style.display = "block";
+        status.style.display = "block";
 
-      setTimeout(() => {
+        setTimeout(() => {
 
-        status.style.display = "none";
+          status.style.display = "none";
 
-      }, 4000);
+        }, 4000);
 
-    })
+      })
 
-    .catch(error => {
+      .catch(error => {
 
-      alert("Failed to send email");
+        alert("Failed to send email");
 
-      console.log(error);
+        console.log(error);
 
-    });
-}
+      });
+  }
+
 </script>
 
 </body>

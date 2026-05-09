@@ -6,6 +6,10 @@
   <title>Upload & Scan — SafeWaste AI</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="/static/style.css">
+  <link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css"
+/>
 </head>
 <body class="fade">
 
@@ -13,9 +17,8 @@
 <nav class="navbar" id="navbar">
   <a href="/" class="nav-logo">
     <div class="logo-icon">
-      <img src="logo.png" alt="SafeWaste AI Logo">
-      <img src="/static/logo.png" alt="SafeWaste AI Logo">
-    </div>
+  <img src="/static/logo.png" alt="SafeWaste AI Logo">
+</div>
     SafeWaste <span class="accent">AI</span>
   </a>
   <ul class="nav-links">
@@ -25,8 +28,8 @@
     <li><a href="/dashboard">Dashboard</a></li>
   </ul>
   <div class="nav-cta">
-    <a href="/dashboard" class="btn btn-outline btn-sm">Dashboard</a>
-    <a href="/upload" class="btn btn-primary btn-sm">Start Scan</a>
+    <a href="/dashboard" class="btn btn-outline btn-sm">DASHBOARD</a>
+    <a href="/upload" class="btn btn-primary btn-sm">SCAN</a>
   </div>
 </nav>
 
@@ -36,7 +39,7 @@
 
     <!-- Page Title -->
     <div class="section-header" style="margin-bottom: 40px; text-align: left; max-width: none;">
-      <div class="section-label">🔬 Waste Scanner</div>
+      <div class="section-label">Waste Scanner</div>
       <h1 class="section-title" style="font-size: 1.9rem;">Upload or Capture Waste Image</h1>
       <p class="section-desc" style="font-size: 0.9rem;">Provide a clear image of the waste item using file upload or live camera. Our AI will classify and guide disposal in seconds.</p>
     </div>
@@ -54,7 +57,7 @@
         <div class="upload-panel">
           <div class="upload-panel-title">
             <div class="panel-icon pi-orange">📁</div>
-            File Upload
+            FILE UPLOAD
           </div>
 
           <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
@@ -71,9 +74,27 @@
           <div class="file-preview" id="filePreview">
             <img id="previewImg" src="" alt="Preview">
             <p class="file-preview-name" id="previewName">—</p>
-            <button type="button" class="btn btn-outline btn-sm" onclick="clearFile()" style="margin-top: 10px; width: 100%;">
-              ✕ Remove File
-            </button>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+
+  <button
+    type="button"
+    class="btn btn-primary btn-sm"
+    onclick="cropUploadedImage()"
+    style="flex:1;"
+  >
+    ✂ Crop
+  </button>
+
+  <button
+    type="button"
+    class="btn btn-outline btn-sm"
+    onclick="clearFile()"
+    style="flex:1;"
+  >
+    ✕ Remove
+  </button>
+
+</div>
           </div>
         </div>
 
@@ -81,7 +102,7 @@
         <div class="upload-panel camera-panel">
           <div class="upload-panel-title">
             <div class="panel-icon pi-green">📷</div>
-            Live Camera Capture
+            LIVE CAMERA
           </div>
 
           <div class="camera-view">
@@ -98,6 +119,14 @@
           <div class="file-preview" id="capturePreview" style="margin-bottom: 16px;">
             <img id="capturedImg" src="" alt="Captured">
             <p class="file-preview-name">Image captured ✅</p>
+            <button
+  type="button"
+  class="btn btn-primary btn-sm"
+  onclick="cropCapturedImage()"
+  style="margin-top:10px; width:100%;"
+>
+  ✂ Crop Captured Image
+</button>
           </div>
 
           <div class="camera-controls">
@@ -121,7 +150,7 @@
           <p id="readyStatus" style="color: var(--text-muted); font-size: 0.85rem;">Select an image via upload or camera capture above, then click Predict.</p>
         </div>
         <button type="submit" class="predict-btn" id="predictBtn">
-          <span class="btn-text">🔬 Predict Waste Category</span>
+          <span class="btn-text">PREDICT</span>
           <span class="spinner"></span>
         </button>
       </div>
@@ -158,7 +187,36 @@
     </div>
   </div>
 </footer>
+<!-- ===== CROP MODAL ===== -->
+<div id="cropModal">
 
+  <div class="crop-box">
+
+    <img id="cropImage">
+
+    <div style="display:flex; gap:10px; margin-top:16px;">
+
+      <button
+        class="btn btn-primary"
+        onclick="applyCrop()"
+        style="flex:1;"
+      >
+        ✅ Apply Crop
+      </button>
+
+      <button
+        class="btn btn-outline"
+        onclick="closeCropper()"
+        style="flex:1;"
+      >
+        Cancel
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
 <script>
   // ---- Navbar scroll ----
   window.addEventListener('scroll', () => {
@@ -220,6 +278,8 @@
 
   // ---- Camera ----
   let stream = null;
+  let cropper = null;
+let currentCropType = '';
   const video = document.getElementById('video');
 
   async function startCamera() {
@@ -291,7 +351,115 @@
     else if (source === 'camera') el.innerHTML = '✅ <strong>Image captured.</strong> Click Predict to classify.';
     else el.textContent = 'Select an image via upload or camera capture above, then click Predict.';
   }
+  // ===== CROPPER =====
 
+function openCropper(imageSrc, type){
+
+  currentCropType = type;
+
+  const modal = document.getElementById('cropModal');
+  const image = document.getElementById('cropImage');
+
+  image.src = imageSrc;
+
+  modal.style.display = 'flex';
+
+  if(cropper){
+    cropper.destroy();
+  }
+
+  image.onload = () => {
+
+    cropper = new Cropper(image,{
+
+      aspectRatio: NaN,
+      viewMode:1,
+      autoCropArea:1,
+      responsive:true
+
+    });
+  };
+}
+
+function closeCropper(){
+
+  document.getElementById('cropModal').style.display = 'none';
+
+  if(cropper){
+    cropper.destroy();
+    cropper = null;
+  }
+}
+
+function cropUploadedImage(){
+
+  const img =
+    document.getElementById('previewImg').src;
+
+  if(!img) return;
+
+  openCropper(img, 'upload');
+}
+
+function cropCapturedImage(){
+
+  const img =
+    document.getElementById('capturedImg').src;
+
+  if(!img) return;
+
+  openCropper(img, 'camera');
+}
+
+function applyCrop(){
+
+  if(!cropper) return;
+
+  const canvas =
+    cropper.getCroppedCanvas({
+      imageSmoothingQuality:'high'
+    });
+
+  const croppedData =
+    canvas.toDataURL('image/jpeg', 0.95);
+
+  canvas.toBlob(blob => {
+
+    const file =
+      new File([blob], 'cropped.jpg', {
+        type:'image/jpeg'
+      });
+
+    const dt = new DataTransfer();
+
+    dt.items.add(file);
+
+    document.getElementById('fileInput').files =
+      dt.files;
+
+    // ===== UPDATE PREVIEWS =====
+
+    if(currentCropType === 'upload'){
+
+      document.getElementById('previewImg').src =
+        croppedData;
+
+      document.getElementById('previewName')
+        .textContent = 'cropped.jpg';
+    }
+
+    if(currentCropType === 'camera'){
+
+      document.getElementById('capturedImg').src =
+        croppedData;
+    }
+
+    updateReadyStatus(currentCropType);
+
+    closeCropper();
+
+  }, 'image/jpeg', 0.95);
+}
   // ---- Form submit loading state ----
   document.getElementById('scanForm').addEventListener('submit', function (e) {
     const btn = document.getElementById('predictBtn');
@@ -299,4 +467,5 @@
     btn.disabled = true;
   });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 </body>
