@@ -391,6 +391,259 @@ def dashboard():
     )
 
 # =========================
+# EXPORT PDF
+# =========================
+
+@app.route("/export-pdf")
+def export_pdf():
+
+    conn = sqlite3.connect("database.db")
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id,
+               filename,
+               prediction,
+               confidence,
+               timestamp
+        FROM history
+        ORDER BY id DESC
+    """)
+
+    logs = cursor.fetchall()
+
+    conn.close()
+
+    # =========================
+    # STATS
+    # =========================
+
+    total_predictions = len(logs)
+
+    avg_conf = 0
+
+    if total_predictions > 0:
+
+        avg_conf = round(
+            sum(log[3] for log in logs)
+            / total_predictions,
+            2
+        )
+
+    counts = {
+        "general": 0,
+        "infectious": 0,
+        "pharmaceutical": 0,
+        "sharps": 0
+    }
+
+    for log in logs:
+
+        pred = log[2].lower()
+
+        if pred in counts:
+            counts[pred] += 1
+
+    # =========================
+    # PDF
+    # =========================
+
+    pdf_path = "safewaste_report.pdf"
+
+    doc = SimpleDocTemplate(
+        pdf_path,
+        pagesize=letter,
+        rightMargin=20,
+        leftMargin=20,
+        topMargin=20,
+        bottomMargin=20
+    )
+
+    styles = getSampleStyleSheet()
+
+    elements = []
+
+    # =========================
+    # TITLE
+    # =========================
+
+    title_style = ParagraphStyle(
+        'title',
+        parent=styles['Heading1'],
+        fontSize=24,
+        leading=30,
+        textColor=colors.darkgreen,
+        spaceAfter=20
+    )
+
+    title = Paragraph(
+        "SafeWaste AI - Prediction Report",
+        title_style
+    )
+
+    elements.append(title)
+
+    generated = Paragraph(
+        f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        styles['BodyText']
+    )
+
+    elements.append(generated)
+
+    elements.append(Spacer(1, 20))
+
+    # =========================
+    # SUMMARY TABLE
+    # =========================
+
+    summary_data = [
+
+        ["Metric", "Value"],
+
+        ["Total Predictions", str(total_predictions)],
+
+        ["Average Confidence", f"{avg_conf}%"],
+
+        ["Sharps Count", str(counts["sharps"])],
+
+        ["General Count", str(counts["general"])],
+
+        ["Pharmaceutical Count", str(counts["pharmaceutical"])],
+
+        ["Infectious Count", str(counts["infectious"])]
+
+    ]
+
+    summary_table = Table(
+        summary_data,
+        colWidths=[220, 180]
+    )
+
+    summary_table.setStyle(TableStyle([
+
+        ('BACKGROUND', (0,0), (-1,0), colors.darkgreen),
+
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
+
+        ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+
+        ('BOTTOMPADDING', (0,0), (-1,0), 10),
+
+    ]))
+
+    elements.append(summary_table)
+
+    elements.append(Spacer(1, 30))
+
+    # =========================
+    # HISTORY TITLE
+    # =========================
+
+    history_title = Paragraph(
+        "Detailed Prediction History",
+        styles['Heading2']
+    )
+
+    elements.append(history_title)
+
+    elements.append(Spacer(1, 12))
+
+    # =========================
+    # HISTORY TABLE
+    # =========================
+
+    history_data = [[
+        "Image",
+        "Prediction",
+        "Confidence",
+        "Timestamp"
+    ]]
+
+    for log in logs:
+
+        image_path = os.path.join(
+            "static/uploads",
+            log[1]
+        )
+
+        # =========================
+        # IMAGE
+        # =========================
+
+        if os.path.exists(image_path):
+
+            try:
+
+                img = RLImage(
+                    image_path,
+                    width=55,
+                    height=55
+                )
+
+            except:
+
+                img = "No Image"
+
+        else:
+
+            img = "Missing"
+
+        history_data.append([
+
+            img,
+
+            str(log[2]).capitalize(),
+
+            f"{log[3]}%",
+
+            str(log[4])[:16]
+
+        ])
+
+    history_table = Table(
+        history_data,
+        colWidths=[80, 120, 100, 180]
+    )
+
+    history_table.setStyle(TableStyle([
+
+        ('BACKGROUND', (0,0), (-1,0), colors.darkgreen),
+
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
+
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+
+        ('BACKGROUND', (0,1), (-1,-1), colors.whitesmoke),
+
+    ]))
+
+    elements.append(history_table)
+
+    # =========================
+    # BUILD
+    # =========================
+
+    doc.build(elements)
+
+    return send_file(
+        pdf_path,
+        as_attachment=True,
+        download_name="SafeWaste_Report.pdf"
+    )
+# =========================
 # SEND EMAIL
 # =========================
 
@@ -399,13 +652,15 @@ def send_dashboard_email():
 
     try:
 
-        print("STARTING EMAIL...")
+        print("STARTING EMAIL REPORT...")
 
         conn = sqlite3.connect("database.db")
+
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT filename,
+            SELECT id,
+                   filename,
                    prediction,
                    confidence,
                    timestamp
@@ -413,34 +668,169 @@ def send_dashboard_email():
             ORDER BY id DESC
         """)
 
-        logs = cursor.fetchall()
+        all_logs = cursor.fetchall()
 
         conn.close()
 
-        print("BUILDING PDF...")
+        # =========================
+        # FULL DATABASE FOR STATS
+        # =========================
+
+        stats_logs = all_logs
+
+        # =========================
+        # ONLY LATEST 20 FOR TABLE
+        # =========================
+
+        logs = all_logs[:20]
+
+        # =========================
+        # STATS
+        # =========================
+
+        total_predictions = len(stats_logs)
+
+        avg_conf = 0
+
+        if total_predictions > 0:
+
+            avg_conf = round(
+
+                sum(log[3] for log in stats_logs)
+
+                / total_predictions,
+
+                2
+            )
+
+        counts = {
+            "general": 0,
+            "infectious": 0,
+            "pharmaceutical": 0,
+            "sharps": 0
+        }
+
+        for log in stats_logs:
+
+            pred = log[2].lower()
+
+            if pred in counts:
+                counts[pred] += 1
+
+        # =========================
+        # PDF GENERATION
+        # =========================
 
         pdf_path = "dashboard_report.pdf"
 
         doc = SimpleDocTemplate(
             pdf_path,
-            pagesize=letter
+            pagesize=letter,
+            rightMargin=20,
+            leftMargin=20,
+            topMargin=20,
+            bottomMargin=20
         )
 
         styles = getSampleStyleSheet()
 
         elements = []
 
+        # =========================
+        # TITLE
+        # =========================
+
+        title_style = ParagraphStyle(
+            'title',
+            parent=styles['Heading1'],
+            fontSize=24,
+            leading=30,
+            textColor=colors.darkgreen,
+            spaceAfter=20
+        )
+
         title = Paragraph(
-            "SafeWaste AI Dashboard Report",
-            styles['Title']
+            "SafeWaste AI - Prediction Report",
+            title_style
         )
 
         elements.append(title)
 
+        generated = Paragraph(
+            f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            styles['BodyText']
+        )
+
+        elements.append(generated)
+
         elements.append(Spacer(1, 20))
 
-        data = [[
-            "Filename",
+        # =========================
+        # SUMMARY TABLE
+        # =========================
+
+        summary_data = [
+
+            ["Metric", "Value"],
+
+            ["Total Predictions", str(total_predictions)],
+
+            ["Average Confidence", f"{avg_conf}%"],
+
+            ["Sharps Count", str(counts["sharps"])],
+
+            ["General Count", str(counts["general"])],
+
+            ["Pharmaceutical Count", str(counts["pharmaceutical"])],
+
+            ["Infectious Count", str(counts["infectious"])]
+
+        ]
+
+        summary_table = Table(
+            summary_data,
+            colWidths=[220, 180]
+        )
+
+        summary_table.setStyle(TableStyle([
+
+            ('BACKGROUND', (0,0), (-1,0), colors.darkgreen),
+
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+
+            ('GRID', (0,0), (-1,-1), 1, colors.black),
+
+            ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+
+            ('BOTTOMPADDING', (0,0), (-1,0), 10),
+
+        ]))
+
+        elements.append(summary_table)
+
+        elements.append(Spacer(1, 30))
+
+        # =========================
+        # HISTORY TITLE
+        # =========================
+
+        history_title = Paragraph(
+            "Detailed Prediction History",
+            styles['Heading2']
+        )
+
+        elements.append(history_title)
+
+        elements.append(Spacer(1, 12))
+
+        # =========================
+        # HISTORY TABLE
+        # =========================
+
+        history_data = [[
+            "Image",
             "Prediction",
             "Confidence",
             "Timestamp"
@@ -448,39 +838,108 @@ def send_dashboard_email():
 
         for log in logs:
 
-            data.append([
-                str(log[0]),
-                str(log[1]),
-                f"{log[2]}%",
-                str(log[3])
+            image_path = os.path.join(
+                "static/uploads",
+                log[1]
+            )
+
+            # =========================
+            # IMAGE
+            # =========================
+
+            if os.path.exists(image_path):
+
+                try:
+
+                    img = RLImage(
+                        image_path,
+                        width=40,
+                        height=40
+                    )
+
+                except:
+
+                    img = "No Image"
+
+            else:
+
+                img = "Missing"
+
+            history_data.append([
+
+                img,
+
+                str(log[2]).capitalize(),
+
+                f"{log[3]}%",
+
+                str(log[4])[:16]
+
             ])
 
-        table = Table(
-            data,
-            colWidths=[150, 100, 80, 180]
+        history_table = Table(
+            history_data,
+            colWidths=[70, 120, 90, 180]
         )
 
-        table.setStyle(TableStyle([
+        history_table.setStyle(TableStyle([
 
-            ('BACKGROUND', (0,0), (-1,0), colors.green),
+            ('BACKGROUND', (0,0), (-1,0), colors.darkgreen),
 
             ('TEXTCOLOR', (0,0), (-1,0), colors.white),
 
-            ('GRID', (0,0), (-1,-1), 1, colors.black),
-
             ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
 
-            ('BOTTOMPADDING', (0,0), (-1,0), 10),
+            ('GRID', (0,0), (-1,-1), 1, colors.black),
 
-            ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+
+            ('BOTTOMPADDING', (0,0), (-1,0), 12),
+
+            ('BACKGROUND', (0,1), (-1,-1), colors.whitesmoke),
 
         ]))
 
-        elements.append(table)
+        elements.append(history_table)
+
+        # =========================
+        # FOOTER NOTE
+        # =========================
+
+        elements.append(Spacer(1, 20))
+
+        footer = Paragraph(
+            "This report was generated automatically by SafeWaste AI.",
+            styles['Italic']
+        )
+
+        elements.append(footer)
+
+        # =========================
+        # BUILD PDF
+        # =========================
+
+        print("BUILDING PDF...")
 
         doc.build(elements)
 
         print("PDF BUILT")
+
+        print(
+            "PDF SIZE:",
+            round(
+                os.path.getsize(pdf_path)
+                / 1024 / 1024,
+                2
+            ),
+            "MB"
+        )
+
+        # =========================
+        # SEND EMAIL
+        # =========================
 
         print("SENDING EMAIL...")
 
@@ -489,12 +948,18 @@ def send_dashboard_email():
             recipients=["simran2315222@gmail.com"]
         )
 
-        msg.body = "Attached is your SafeWaste AI PDF report."
+        msg.body = """
+SafeWaste AI Report Attached.
+
+The latest dashboard analytics report has been generated successfully.
+
+Only latest 20 predictions are included in the PDF table, but overall stats are based on the entire database.
+"""
 
         with open(pdf_path, "rb") as fp:
 
             msg.attach(
-                "dashboard_report.pdf",
+                "SafeWaste_Report.pdf",
                 "application/pdf",
                 fp.read()
             )
@@ -503,7 +968,12 @@ def send_dashboard_email():
 
         print("EMAIL SENT SUCCESSFULLY")
 
+        # =========================
+        # CLEANUP
+        # =========================
+
         if os.path.exists(pdf_path):
+
             os.remove(pdf_path)
 
         return "EMAIL SENT SUCCESSFULLY"
