@@ -40,12 +40,12 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 
-app.config['MAIL_USERNAME'] = 'simran2315222@gmail.com'
+app.config['MAIL_USERNAME'] = 'your_mail@gmail.com'
 
 # IMPORTANT → KEEP SPACES
-app.config['MAIL_PASSWORD'] = 'ztep dess iios guid'
+app.config['MAIL_PASSWORD'] = 'YOUR_APP_PASSWORD'
 
-app.config['MAIL_DEFAULT_SENDER'] = 'simran2315222@gmail.com'
+app.config['MAIL_DEFAULT_SENDER'] = 'your_mail@gmail.com'
 
 mail = Mail(app)
 
@@ -348,7 +348,7 @@ def predict():
 
             alert_msg = Message(
                 subject="⚠ Low Confidence Prediction Alert",
-                recipients=["simran2315222@gmail.com"]
+                recipients=["your_mail@gmail.com"]
             )
 
             alert_msg.body = f"""
@@ -990,7 +990,7 @@ def send_dashboard_email():
 
         msg = Message(
             subject="SafeWaste AI Dashboard Report",
-            recipients=["simran2315222@gmail.com"]
+            recipients=["your_mail@gmail.com"]
         )
 
         msg.body = """
