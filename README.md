@@ -99,7 +99,7 @@ SafeWaste-AI/
 │
 └── README.md
 ```
-
+The files in .gitignore are not included in this repository due to large size or irrelevance.
 ---
 
 # ⚙️ How the System Works
