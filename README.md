@@ -100,6 +100,7 @@ SafeWaste-AI/
 └── README.md
 ```
 The files in .gitignore are not included in this repository due to large size or irrelevance.
+The dataset was taken from Kaggle.
 ---
 
 # ⚙️ How the System Works
